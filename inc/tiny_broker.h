@@ -10,9 +10,10 @@
 #ifndef INC_TINY_BROKER_H_
 #define INC_TINY_BROKER_H_
 
+#include <stdbool.h>
+#include <string.h>
 #include "mqtt_socket.h"
-#include "stdbool.h"
-#include "string.h"
+#include "tiny_netinet.h"
 
 #define DEFAULT_BROKER_TIMEOUT		(100)
 #define MAX_PLD_SIZE				(128)
@@ -29,6 +30,7 @@
 #define MAX_WILL_MSG_SIZE			(32)
 #define MAX_USR_NAME_SIZE			(32)
 #define MAX_PSWD_NAME_SIZE			(32)
+#define MAX_ID_SIZE					(32)
 #define NOT_FOUND					(255)
 #define MAX_CONN_CLIENTS			(8)
 #define ADDR_SIZE					(4)
@@ -64,6 +66,8 @@
 #define CONN_ACK_OK_SESS_PRESENT	(0)
 
 #define CONTR_TYPE_CONNACK 			(2)
+
+typedef struct sockaddr_in sockaddr_t;
 
 
 typedef struct{
@@ -160,7 +164,7 @@ typedef struct{
 typedef struct{
 	bool session_present;
 	uint8_t code;
-}conn_ack_stat_t;
+}conn_result_t;
 
 
 
@@ -238,11 +242,11 @@ typedef struct{
 
 
 typedef struct {
-	uint8_t net_address[ADDR_SIZE];
+	sockaddr_t sockaddr;
 	char  id[MAX_ID_SIZE];
 	uint16_t keepalive;
 	char  username[MAX_USR_NAME_SIZE];
-	char  password;[MAX_PSWD_NAME_SIZE];
+	char  password[MAX_PSWD_NAME_SIZE];
 	bool last_will;
 	char  will_topic[MAX_TOPIC_NAME_SIZE];
 	char  will_msg[MAX_WILL_MSG_SIZE];
@@ -256,15 +260,15 @@ typedef struct{
 	conn_client_t clients[MAX_CONN_CLIENTS];
 	MqttNet * net;
 }broker_t;
+//__attribute__((packed))
 
 
 void broker_init (broker_t * broker, MqttNet* net);
 rem_length_t decode_pck_len (uint8_t * frame);
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_ack_stat_t * stat, uint8_t* net_add);
+void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_result_t * conn_res,  sockaddr_t * sockaddr);
 void * m_malloc(size_t size);
-void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck, uint8_t* net_address);
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_ack_stat_t * stat, uint8_t* net_add);
-void broker_send_conn_ack(broker_t * broker,  conn_ack_stat_t * stat);
+void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck, sockaddr_t * sockaddr);
+//void broker_send_conn_ack(broker_t * broker,  conn_result_t * stat);
 uint8_t broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);

@@ -6,9 +6,8 @@
  *      Author: tomek
  */
 
-#include "tiny_broker.h"
 #include <string.h>
-
+#include "tiny_broker.h"
 
 
 
@@ -19,28 +18,29 @@
 
 #define X_HTONS(a) ((a>>8) | (a<<8))
 
-extern local_host_t local_lost;
+//extern local_host_t local_lost;
+
 
 
  void broker_init (broker_t * broker, MqttNet* net){
  	memset(broker, 0, sizeof(broker_t));
  	broker->net = net;
  }
-
-
-void * m_malloc(size_t size){
-	static uint8_t m_heap[M_HEAP_SIZE];
-	static uint16_t prev_used_bytes_nb;
-	static uint16_t new_used_bytes_nb;
-	prev_used_bytes_nb = new_used_bytes_nb;
-	new_used_bytes_nb = prev_used_bytes_nb + size;
-	if (new_used_bytes_nb < M_HEAP_SIZE){
-		return &m_heap[prev_used_bytes_nb];
-	}
-	else{
-		return NULL;
-	}
-}
+//
+//
+//void * m_malloc(size_t size){
+//	static uint8_t m_heap[M_HEAP_SIZE];
+//	static uint16_t prev_used_bytes_nb;
+//	static uint16_t new_used_bytes_nb;
+//	prev_used_bytes_nb = new_used_bytes_nb;
+//	new_used_bytes_nb = prev_used_bytes_nb + size;
+//	if (new_used_bytes_nb < M_HEAP_SIZE){
+//		return &m_heap[prev_used_bytes_nb];
+//	}
+//	else{
+//		return NULL;
+//	}
+//}
 
 
 
@@ -191,8 +191,8 @@ uint8_t * format_conn_ack(header_conn_ack_t * header_ack, bool session_pres, uin
 
 
 
-void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck, uint8_t* net_address){
-	new_client->id = X_MALLOC((*conn_pck->pld.client_id_len)+1);
+void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck,  sockaddr_t * sockaddr){
+
 	strncpy(new_client->id,  conn_pck->pld.client_id, *conn_pck->pld.client_id_len);
 
 	new_client->keepalive = *conn_pck->var_head.keep_alive;
@@ -203,23 +203,16 @@ void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_p
 
 	if (conn_pck->var_head.conn_flags->last_will){
 		new_client->will_retain = 1;
-		new_client->will_topic = X_MALLOC((*conn_pck->pld.will_topic_len)+1);
 		strncpy(new_client->will_topic,  conn_pck->pld.will_topic, *conn_pck->pld.will_topic_len );
-
-		new_client->will_msg = X_MALLOC((*conn_pck->pld.will_msg_len)+1);
 		strncpy(new_client->will_msg,  conn_pck->pld.will_msg, *conn_pck->pld.will_msg_len);
-
 		new_client->will_qos = conn_pck->var_head.conn_flags->will_qos;
-
 	}
 
 	if (conn_pck->var_head.conn_flags->user_name){
-		new_client->username = X_MALLOC((*conn_pck->pld.usr_name_len)+1);
 		strncpy(new_client->username,  conn_pck->pld.usr_name, *conn_pck->pld.usr_name_len);
 	}
 
 	if (conn_pck->var_head.conn_flags->pswd){
-		new_client->password = X_MALLOC((*conn_pck->pld.pswd_len)+1);
 		strncpy(new_client->password,  conn_pck->pld.pswd, *conn_pck->pld.pswd_len);
 	}
 }
@@ -230,14 +223,11 @@ void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_p
 // https://morphuslabs.com/hacking-the-iot-with-mqtt-8edaf0d07b9b ack codes
 
 
-
-
-
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_ack_stat_t * stat, uint8_t* net_add){
+void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_result_t * conn_res,  sockaddr_t * sockaddr){
 
 	if  (*conn_pck->var_head.proto_level != PROTO_LEVEL_MQTT311){
-		stat->session_present = false;
-		stat->code = CONN_ACK_BAD_PROTO;
+		conn_res->session_present = false;
+		conn_res->code = CONN_ACK_BAD_PROTO;
 		return;
 	}
 
@@ -247,43 +237,44 @@ void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_ack
 	}
 
 	if (is_client_connected(broker, conn_pck->pld.client_id)){
-		stat->session_present = true;
-		stat->code = CONN_ACK_OK;
+		conn_res->session_present = true;
+		conn_res->code = CONN_ACK_OK;
 		return;
 	}
 
 	if (can_broker_accept_next_client(broker))
 	{
 		conn_client_t new_client;
-		broker_fill_new_client(&new_client, conn_pck, net_add);
+		broker_fill_new_client(&new_client, conn_pck, sockaddr);
 
 		if (is_client_authorised(new_client.username, new_client.password)){
 			add_client(broker, &new_client);
-			stat->session_present = false;
-			stat->code = CONN_ACK_OK;
+			conn_res->session_present = false;
+			conn_res->code = CONN_ACK_OK;
 			return;
 
 		}else{
-			stat->session_present = false;
-			stat->code = CONN_ACK_BAD_AUTH;
+			conn_res->session_present = false;
+			conn_res->code = CONN_ACK_BAD_AUTH;
 			return;
 		}
 	} else {
-		stat->session_present = false;
-		stat->code = CONN_ACK_NOT_AVBL;
+		conn_res->session_present = false;
+		conn_res->code = CONN_ACK_NOT_AVBL;
 		return;
 	}
 }
 
 
-void broker_send_conn_ack(broker_t * broker,  conn_ack_stat_t * stat){
-	header_conn_ack_t header_ack;
-	format_conn_ack(&header_ack, stat->session_present, stat->code);
-	uint8_t * buf = (uint8_t *) &header_ack;
-	uint8_t buf_len = sizeof(header_conn_ack_t);
-	broker->net->write(NULL, buf, buf_len, DEFAULT_BROKER_TIMEOUT);
-
-}
+//need to change: send to specyfic client
+//void broker_send_conn_ack(broker_t * broker,  conn_result_t * stat){
+//	header_conn_ack_t header_ack;
+//	format_conn_ack(&header_ack, stat->session_present, stat->code);
+//	uint8_t * buf = (uint8_t *) &header_ack;
+//	uint8_t buf_len = sizeof(header_conn_ack_t);
+//	broker->net->write(NULL, buf, buf_len, DEFAULT_BROKER_TIMEOUT);
+//
+//}
 
 
 /*-------------------------------PUBLIHS-----------------------------------------*/
@@ -324,7 +315,7 @@ void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck){
 				uint16_t len = *pub_pck->var_head.topic_name_len;
 				unsigned char* topic = pub_pck->var_head.topic_name;
 				if (memcmp (&broker->clients[i].subs_topic[j].topic_name, topic, len)){
-					broker->net->write(broker->clients[i].net_address, topic, len, BROKER_TIMEOUT);
+					//broker->net->write((void *)broker->clients[i].sockaddr, topic, len, BROKER_TIMEOUT);
 					break;
 				}
 			}
