@@ -132,14 +132,14 @@ uint8_t broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck){
 
 	conn_pck->var_head.proto_name = (char*) &frame[pos];
 	pos += *conn_pck->var_head.len;
-	conn_pck->var_head.proto_level = (uint8_t*) &frame[pos];
+	conn_pck->var_head.proto_level = (uint8_t*) &frame[pos];//8
 	pos += 1;
-	conn_pck->var_head.conn_flags = (conn_flags_t*) &frame[pos];
+	conn_pck->var_head.conn_flags = (conn_flags_t*) &frame[pos];//9
 	pos += 1;
-	conn_pck->var_head.keep_alive = (uint16_t*)  &frame[pos];
+	conn_pck->var_head.keep_alive = (uint16_t*)  &frame[pos];//10+11
 	*conn_pck->var_head.keep_alive = X_HTONS(*conn_pck->var_head.keep_alive);
-
-	conn_pck->pld.client_id_len  = (uint16_t*) &frame[pos];
+	pos += 2;
+	conn_pck->pld.client_id_len  = (uint16_t*) &frame[pos];//1213
 	*conn_pck->pld.client_id_len = X_HTONS(*conn_pck->pld.client_id_len);
 	pos += 2;
 	conn_pck->pld.client_id = (char*) &frame[pos];

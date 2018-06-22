@@ -26,6 +26,9 @@
 
 #define MAX_SUBS_TOPIC 				(8)
 #define MAX_TOPIC_NAME_SIZE 		(32)
+#define MAX_WILL_MSG_SIZE			(32)
+#define MAX_USR_NAME_SIZE			(32)
+#define MAX_PSWD_NAME_SIZE			(32)
 #define NOT_FOUND					(255)
 #define MAX_CONN_CLIENTS			(8)
 #define ADDR_SIZE					(4)
@@ -236,13 +239,13 @@ typedef struct{
 
 typedef struct {
 	uint8_t net_address[ADDR_SIZE];
-	char*  id;
+	char  id[MAX_ID_SIZE];
 	uint16_t keepalive;
-	char*  username;
-	char*  password;
+	char  username[MAX_USR_NAME_SIZE];
+	char  password;[MAX_PSWD_NAME_SIZE];
 	bool last_will;
-	char*  will_topic;
-	char*  will_msg;
+	char  will_topic[MAX_TOPIC_NAME_SIZE];
+	char  will_msg[MAX_WILL_MSG_SIZE];
 	uint8_t will_qos;
 	uint8_t will_retain;
 	sub_topic_t subs_topic[MAX_SUBS_TOPIC];
