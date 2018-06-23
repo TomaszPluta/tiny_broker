@@ -70,17 +70,34 @@
 typedef struct sockaddr_in sockaddr_t;
 
 
+
+
+
+
+
 typedef struct{
 uint8_t data[256];
 uint8_t len;
 uint8_t pos;
 }local_host_t;
 
-typedef struct{
-	uint8_t len_LSB;
 
-	char * data;
-}string_in_frame_t;
+
+
+typedef int (*broker_net_conn)(void *cntx, sockaddr_t * sockaddr);
+typedef int (*broker_net_send)(void *cntx, sockaddr_t * sockaddr, const uint8_t* buf, uint16_t buf_len);
+typedef int (*broker_net_rec)(void *cntx, sockaddr_t * sockaddr, uint8_t* buf, uint16_t buf_len);
+typedef int (*broker_net_discon)(void *context, sockaddr_t * sockaddr);
+
+
+typedef struct{
+	broker_net_conn connect;
+	broker_net_send send;
+	broker_net_rec receive;
+	broker_net_discon disconnect;
+}broker_net;
+
+
 
 
 
@@ -241,6 +258,10 @@ typedef struct{
 
 
 
+
+;
+
+
 typedef struct {
 	sockaddr_t sockaddr;
 	char  id[MAX_ID_SIZE];
@@ -258,18 +279,17 @@ typedef struct {
 
 typedef struct{
 	conn_client_t clients[MAX_CONN_CLIENTS];
-	MqttNet * net;
+	broker_net * net;
 }broker_t;
 //__attribute__((packed))
 
 
-void broker_init (broker_t * broker, MqttNet* net);
+void broker_init (broker_t * broker, broker_net * net);
 rem_length_t decode_pck_len (uint8_t * frame);
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_result_t * conn_res,  sockaddr_t * sockaddr);
+void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res);
 void * m_malloc(size_t size);
-void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck, sockaddr_t * sockaddr);
 //void broker_send_conn_ack(broker_t * broker,  conn_result_t * stat);
-uint8_t broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
+void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
 #endif /* INC_TINY_BROKER_H_ */

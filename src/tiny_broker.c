@@ -22,26 +22,23 @@
 
 
 
- void broker_init (broker_t * broker, MqttNet* net){
- 	memset(broker, 0, sizeof(broker_t));
- 	broker->net = net;
- }
-//
-//
-//void * m_malloc(size_t size){
-//	static uint8_t m_heap[M_HEAP_SIZE];
-//	static uint16_t prev_used_bytes_nb;
-//	static uint16_t new_used_bytes_nb;
-//	prev_used_bytes_nb = new_used_bytes_nb;
-//	new_used_bytes_nb = prev_used_bytes_nb + size;
-//	if (new_used_bytes_nb < M_HEAP_SIZE){
-//		return &m_heap[prev_used_bytes_nb];
-//	}
-//	else{
-//		return NULL;
-//	}
-//}
+void broker_init_directly (broker_t * broker,
+		broker_net_conn connect,
+		broker_net_send send,
+		broker_net_rec receive,
+		broker_net_discon disconnect){
+	memset(broker, 0, sizeof(broker_t));
+	broker->net->connect = connect;
+	broker->net->send = send;
+	broker->net->receive = receive;
+	broker->net->disconnect = disconnect;
+}
 
+
+void broker_init_by_given_net(broker_t * broker, broker_net_t * broker_net){
+	memset(broker, 0, sizeof(broker_t));
+	broker->net = broker_net;
+}
 
 
 bool is_client_connected(broker_t * broker, char* client_id){
@@ -119,7 +116,7 @@ static void add_client (broker_t * broker, conn_client_t * new_client){
 /*-------------------------------CONNECT-----------------------------------------*/
 
 
-uint8_t broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck){
+void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck){
 	uint8_t pos = 0;
 	conn_pck->fix_head.ctrl_byte =  (conn_ctrl_byte_t *) &frame[pos];
 	pos ++;
@@ -191,7 +188,9 @@ uint8_t * format_conn_ack(header_conn_ack_t * header_ack, bool session_pres, uin
 
 
 
-void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck,  sockaddr_t * sockaddr){
+static void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck,  sockaddr_t * sockaddr){
+
+	memcpy(&new_client->sockaddr, &sockaddr, sizeof (sockaddr_t));
 
 	strncpy(new_client->id,  conn_pck->pld.client_id, *conn_pck->pld.client_id_len);
 
@@ -223,7 +222,7 @@ void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_p
 // https://morphuslabs.com/hacking-the-iot-with-mqtt-8edaf0d07b9b ack codes
 
 
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_result_t * conn_res,  sockaddr_t * sockaddr){
+void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res){
 
 	if  (*conn_pck->var_head.proto_level != PROTO_LEVEL_MQTT311){
 		conn_res->session_present = false;
@@ -252,7 +251,6 @@ void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, conn_res
 			conn_res->session_present = false;
 			conn_res->code = CONN_ACK_OK;
 			return;
-
 		}else{
 			conn_res->session_present = false;
 			conn_res->code = CONN_ACK_BAD_AUTH;
