@@ -21,6 +21,22 @@
 
 
 
+#define PCKT_TYPE_CONNECT		(1)
+#define PCKT_TYPE_CONNACK		(2)
+#define PCKT_TYPE_PUBLISH		(3)
+#define PCKT_TYPE_PUBACK		(4)
+#define PCKT_TYPE_PUBREC		(5)
+#define PCKT_TYPE_PUBREL		(6)
+#define PCKT_TYPE_PUBCOMP		(7)
+#define PCKT_TYPE_SUBSCRIBE  	(8)
+#define PCKT_TYPE_SUBACK		(9)
+#define PCKT_TYPE_UNSUBSCRIBE	(10)
+#define PCKT_TYPE_UNSUBACK		(11)
+#define PCKT_TYPE_PINGREQ		(12)
+#define PCKT_TYPE_PINGRESP 		(13)
+#define PCKT_TYPE_DISCONNECT	(14)
+
+
 
 
 #define PROTO_LEVEL_MQTT311			(4)
@@ -131,7 +147,7 @@ typedef struct{
 	uint8_t remainin_len;
 	Connect_ack_Flags ack_flags;
 	uint8_t conn_code;
-}header_conn_ack_t;
+}conn_ack_t;
 
 
 
@@ -292,9 +308,9 @@ void broker_init_directly (broker_t * broker,
 		broker_net_rec receive,
 		broker_net_discon disconnect); //
 rem_length_t decode_pck_len (uint8_t * frame);
-void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res);
+void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res);
 void * m_malloc(size_t size);
-//void broker_send_conn_ack(broker_t * broker,  conn_result_t * stat);
+uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res);
 void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);

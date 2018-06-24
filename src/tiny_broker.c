@@ -80,7 +80,7 @@ static inline uint8_t broker_find_client_pos(broker_t * broker, char* client_id)
 bool broker_remove_client(broker_t * broker, char* client_id){
 	uint8_t pos = broker_find_client_pos(broker, client_id);
 	if (pos != NOT_FOUND){
-		memset(broker->clients[pos], 0, sizeof (conn_client_t));
+		memset(&broker->clients[pos], 0, sizeof (conn_client_t));
 		return true;
 	}
 	return false;
@@ -102,15 +102,36 @@ static void add_client (broker_t * broker, conn_client_t * new_client){
 		memcpy(&broker->clients[pos], new_client, sizeof (conn_client_t));
 }
 
-//static conn_client_t * get_free_slot_for_client(broker_t * broker){
-//	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-//		if (!(broker->clients[i].active)){
-//			return &broker->clients[i];
-//		}
-//	}
-//	return NULL;
-//}
-//
+
+
+
+
+void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t * sockaddr){
+	uint8_t pckt_type = (frame[0]>>4);
+	switch (pckt_type) {
+	case PCKT_TYPE_CONNECT:{
+		conn_pck_t conn_pck;
+		broker_decode_connect(frame, &conn_pck);
+		conn_result_t conn_result;
+		broker_handle_new_connection(broker, &conn_pck, sockaddr, &conn_result);
+		conn_ack_t conn_ack;
+		encode_conn_ack(&conn_ack, &conn_result);
+		broker->net->send(NULL, sockaddr, (uint8_t*)&conn_ack, sizeof(conn_ack_t) );
+		break;
+	}
+
+	}
+
+
+}
+
+
+
+
+
+
+
+
 
 
 /*-------------------------------CONNECT-----------------------------------------*/
@@ -177,12 +198,12 @@ __attribute__( ( weak ) ) bool is_client_authorised (char* usr_name, char* pswd)
 }
 
 
-uint8_t * format_conn_ack(header_conn_ack_t * header_ack, bool session_pres, uint8_t code){
-	memset(header_ack, 0, sizeof (header_conn_ack_t));
+uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res){
+	memset(header_ack, 0, sizeof (conn_ack_t));
 	header_ack->control_type = (CONTR_TYPE_CONNACK << 4);
 	header_ack->remainin_len = CONN_ACK_PLD_LEN;
-	header_ack->ack_flags.session_pres = session_pres;
-	header_ack->conn_code = code;
+	header_ack->ack_flags.session_pres = conn_res->session_present;
+	header_ack->conn_code = conn_res->code;
 	return (uint8_t *)header_ack;
 }
 
@@ -262,17 +283,6 @@ void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, socka
 		return;
 	}
 }
-
-
-//need to change: send to specyfic client
-//void broker_send_conn_ack(broker_t * broker,  conn_result_t * stat){
-//	header_conn_ack_t header_ack;
-//	format_conn_ack(&header_ack, stat->session_present, stat->code);
-//	uint8_t * buf = (uint8_t *) &header_ack;
-//	uint8_t buf_len = sizeof(header_conn_ack_t);
-//	broker->net->write(NULL, buf, buf_len, DEFAULT_BROKER_TIMEOUT);
-//
-//}
 
 
 /*-------------------------------PUBLIHS-----------------------------------------*/
@@ -376,8 +386,6 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 }
 
 
-
-/*TODO: extract methods (and len value)*/
 void add_subscribtion(conn_client_t *client, sub_pck_t * sub_pck){
 	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){
 		for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
