@@ -119,6 +119,13 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		broker->net->send(NULL, sockaddr, (uint8_t*)&conn_ack, sizeof(conn_ack_t) );
 		break;
 	}
+	case PCKT_TYPE_PUBLISH:{
+		pub_pck_t pub_pck;
+		broker_decode_publish(frame, &pub_pck);
+		publish_msg_to_subscribers(broker, &pub_pck);
+		publish_ack_t publish_ack;
+		encode_publish_ack(&publish_ack, pub_pck.var_head.packet_id);
+	}
 
 	}
 
@@ -302,7 +309,7 @@ void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, socka
 	*pub_pck->var_head.topic_name_len = X_HTONS(*pub_pck->var_head.topic_name_len);
 	pos += 2;
 
-	pub_pck->var_head.topic_name = (unsigned char*)  &frame[pos];
+	pub_pck->var_head.topic_name = (char*)  &frame[pos];
 	pos += *pub_pck->var_head.topic_name_len;
 
 	if (pub_pck->fix_head.ctrl_byte->QoS > 0){
@@ -321,9 +328,9 @@ void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck){
 		if ((broker->clients[i].active)){
 			for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
 				uint16_t len = *pub_pck->var_head.topic_name_len;
-				unsigned char* topic = pub_pck->var_head.topic_name;
-				if (memcmp (&broker->clients[i].subs_topic[j].topic_name, topic, len)){
-					//broker->net->write((void *)broker->clients[i].sockaddr, topic, len, BROKER_TIMEOUT);
+				char* topic = pub_pck->var_head.topic_name;
+				if (strncmp(broker->clients[i].subs_topic[j].topic_name, topic, len)){
+					broker->net->send(NULL, &broker->clients[i].sockaddr, (uint8_t*)&pub_pck, sizeof(pub_pck_t) );
 					break;
 				}
 			}
@@ -353,7 +360,11 @@ rem_length_t decode_pck_len (uint8_t * frame){
 
 
 
-
+void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id){
+	publish_ack->control_type = (PCKT_TYPE_PUBLISH << 4);
+	publish_ack->remainin_len = 2;
+	publish_ack->packet_id = pckt_id;
+}
 
 /*-------------------------------SUBSCRIBE-----------------------------------------*/
 
@@ -377,7 +388,7 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 		sub_pck->pld_topics[topic_nb].topic_name_len = (uint16_t *)  &frame[pos];
 		*sub_pck->pld_topics[topic_nb].topic_name_len  = X_HTONS(*sub_pck->pld_topics[topic_nb].topic_name_len );
 		pos += 2;
-		sub_pck->pld_topics[topic_nb].topic_name =  (unsigned char*)  &frame[pos];
+		sub_pck->pld_topics[topic_nb].topic_name =  (char*)  &frame[pos];
 		pos += (*sub_pck->pld_topics[topic_nb].topic_name_len);
 		sub_pck->pld_topics[topic_nb].qos = (uint8_t*) &frame[pos];
 		pos += 1;
@@ -390,14 +401,15 @@ void add_subscribtion(conn_client_t *client, sub_pck_t * sub_pck){
 	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){
 		for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
 			/*to be sure that one topic is not subset of another filter*/
-			if (client->subs_topic[i].topic_name != NULL){
-				if (*client->subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_name_len){
+			if (client->subs_topic[i].used){
+				if (client->subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_name_len){
 					if (memcmp(client->subs_topic[i].topic_name, sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_name_len)){
-						client->subs_topic[i].qos = sub_pck->pld_topics[j].qos;
+						client->subs_topic[i].qos = *sub_pck->pld_topics[j].qos;
 					}
 				}
 			}else{
 				memcpy(&client->subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_name_len);
+				client->subs_topic[i].used = false;
 				break;
 			}
 		}

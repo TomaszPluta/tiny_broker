@@ -220,7 +220,7 @@ typedef struct{
 
 typedef struct{
 	uint16_t * topic_name_len;
-	unsigned char * topic_name;
+	char * topic_name;
 	uint16_t  * packet_id;
 }pub_var_head_t;
 
@@ -232,19 +232,20 @@ typedef struct{
 }pub_pck_t;
 
 
+
 typedef struct{
-	bool session_present;
-	uint8_t code;
-}pub_ack_stat_t;
+	uint8_t control_type;
+	uint8_t remainin_len;
+	uint16_t packet_id;
+}publish_ack_t;
 
-
+/*---------subscribe-------------------*/
 
 typedef struct{
 	uint8_t reserved :4;
 	uint8_t type :4;
 }subs_ctrl_byte_t;
 
-/*---------subscribe-------------------*/
 typedef struct {
 	subs_ctrl_byte_t * subs_ctrl_byte;
 	uint32_t rem_len;
@@ -258,9 +259,9 @@ typedef struct{
 
 typedef struct{
 	uint16_t *topic_name_len;
-	unsigned char *topic_name;
+	char *topic_name;
 	uint8_t *qos;
-}sub_topic_t;
+}sub_pld_topic_t;
 
 
 
@@ -268,14 +269,17 @@ typedef struct{
 typedef struct{
 	sub_fix_head_t fix_head;
 	sub_var_head_t var_head;
-	sub_topic_t pld_topics[MAX_SUB_PLDT];
+	sub_pld_topic_t pld_topics[MAX_SUB_PLDT];
 }sub_pck_t;
 
 
 
-
-
-;
+typedef struct{
+	uint16_t topic_name_len;
+	char topic_name[MAX_TOPIC_NAME_SIZE];
+	uint8_t qos;
+	bool used;
+}sub_topic_t;
 
 
 typedef struct {
@@ -314,4 +318,5 @@ uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res);
 void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
+void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
 #endif /* INC_TINY_BROKER_H_ */
