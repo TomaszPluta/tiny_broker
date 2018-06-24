@@ -95,7 +95,7 @@ typedef struct{
 	broker_net_send send;
 	broker_net_rec receive;
 	broker_net_discon disconnect;
-}broker_net;
+}broker_net_t;
 
 
 
@@ -279,12 +279,18 @@ typedef struct {
 
 typedef struct{
 	conn_client_t clients[MAX_CONN_CLIENTS];
-	broker_net * net;
+	broker_net_t * net;
 }broker_t;
 //__attribute__((packed))
 
 
-void broker_init (broker_t * broker, broker_net * net);
+/*there is two way to initialize broker - by given net struct or all callback directly*/
+void broker_init_by_given_net(broker_t * broker, broker_net_t * broker_net);
+void broker_init_directly (broker_t * broker,
+		broker_net_conn connect,
+		broker_net_send send,
+		broker_net_rec receive,
+		broker_net_discon disconnect); //
 rem_length_t decode_pck_len (uint8_t * frame);
 void broker_handle_new_connect (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res);
 void * m_malloc(size_t size);

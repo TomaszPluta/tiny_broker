@@ -80,7 +80,7 @@ static inline uint8_t broker_find_client_pos(broker_t * broker, char* client_id)
 bool broker_remove_client(broker_t * broker, char* client_id){
 	uint8_t pos = broker_find_client_pos(broker, client_id);
 	if (pos != NOT_FOUND){
-		broker->clients[pos].active = false;
+		memset(broker->clients[pos], 0, sizeof (conn_client_t));
 		return true;
 	}
 	return false;
@@ -189,7 +189,7 @@ uint8_t * format_conn_ack(header_conn_ack_t * header_ack, bool session_pres, uin
 
 
 static void broker_fill_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck,  sockaddr_t * sockaddr){
-
+	memset(new_client, 0, sizeof(conn_client_t));
 	memcpy(&new_client->sockaddr, &sockaddr, sizeof (sockaddr_t));
 
 	strncpy(new_client->id,  conn_pck->pld.client_id, *conn_pck->pld.client_id_len);
