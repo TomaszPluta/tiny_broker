@@ -1,0 +1,3 @@
+radioPinFunctions.c:19:6:nrf24_setupPins	8	static
+radioPinFunctions.c:28:6:nrf24_ce_digitalWrite	16	static
+radioPinFunctions.c:40:6:nrf24_csn_digitalWrite	16	static

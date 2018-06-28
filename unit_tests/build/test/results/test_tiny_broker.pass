@@ -1,0 +1,16 @@
+---
+:source:
+  :path: test
+  :file: test_tiny_broker.c
+:successes:
+- :test: test_tiny_broker_broker_decode_publish
+  :line: 19
+  :message: ''
+:failures: []
+:ignores: []
+:counts:
+  :total: 1
+  :passed: 1
+  :failed: 0
+  :ignored: 0
+:stdout: []

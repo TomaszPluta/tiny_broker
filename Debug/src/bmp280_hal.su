@@ -1,0 +1,6 @@
+bmp280_hal.c:6:6:spi2_init	32	static
+bmp280_hal.c:49:10:spi_read_write_string	40	static
+bmp280_hal.c:72:5:bmp280_SPI_bus_read	88	static
+bmp280_hal.c:113:5:bmp280_SPI_bus_write	168	static
+bmp280_hal.c:146:7:bmp280_delay_msek	16	static
+bmp280_hal.c:154:4:bmp280_assign_SPI	16	static

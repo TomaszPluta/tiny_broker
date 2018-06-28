@@ -1,0 +1,7 @@
+mqtt_socket.c:89:5:MqttSocket_Init	24	static
+mqtt_socket.c:110:12:MqttSocket_WriteDo	40	static
+mqtt_socket.c:145:5:MqttSocket_Write	32	static
+mqtt_socket.c:195:12:MqttSocket_ReadDo	40	static
+mqtt_socket.c:231:5:MqttSocket_Read	32	static
+mqtt_socket.c:280:5:MqttSocket_Connect	40	static
+mqtt_socket.c:423:5:MqttSocket_Disconnect	24	static

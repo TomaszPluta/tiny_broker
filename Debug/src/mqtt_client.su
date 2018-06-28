@@ -1,0 +1,13 @@
+mqtt_client.c:36:12:MqttClient_HandlePayload	80	static
+mqtt_client.c:245:12:MqttClient_WaitType	48	static
+mqtt_client.c:335:5:MqttClient_Init	32	static
+mqtt_client.c:367:5:MqttClient_Connect	32	static
+mqtt_client.c:414:5:MqttClient_Publish	40	static
+mqtt_client.c:513:5:MqttClient_Subscribe	48	static
+mqtt_client.c:552:5:MqttClient_Unsubscribe	40	static
+mqtt_client.c:584:5:MqttClient_Ping	32	static
+mqtt_client.c:613:5:MqttClient_Disconnect	24	static
+mqtt_client.c:637:5:MqttClient_WaitMessage	24	static
+mqtt_client.c:643:5:MqttClient_NetConnect	32	static
+mqtt_client.c:649:5:MqttClient_NetDisconnect	16	static
+mqtt_client.c:655:13:MqttClient_ReturnCodeToString	16	static

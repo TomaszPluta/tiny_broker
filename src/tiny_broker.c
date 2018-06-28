@@ -125,6 +125,19 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		publish_msg_to_subscribers(broker, &pub_pck);
 		publish_ack_t publish_ack;
 		encode_publish_ack(&publish_ack, pub_pck.var_head.packet_id);
+		if (pub_pck.fix_head.ctrl_byte->QoS >=1){
+			broker->net->send(NULL, sockaddr, (uint8_t*)&publish_ack, sizeof(publish_ack_t) );
+		}
+		break;
+	}
+	case PCKT_TYPE_SUBSCRIBE:{
+		sub_pck_t sub_pck;
+		broker_decode_subscribe(frame, &sub_pck);
+		add_subscribtion(broker, &pub_pck);
+		sub_ack_t subscribe_ack;
+		encode_subscribe_ack(&subscribe_ack, );
+		broker->net->send(NULL, sockaddr, (uint8_t*)&subscribe_ack, sizeof(conn_ack_t) );
+		break;
 	}
 
 	}
@@ -290,6 +303,35 @@ void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, socka
 		return;
 	}
 }
+
+
+bool broker_was_session_present_for_usr(broker_t * broker, conn_pck_t *conn_pck){
+	if ()
+}
+
+
+uint8_t broker_can_accept_conn(broker_t * broker, conn_pck_t *conn_pck){
+	if  (*conn_pck->var_head.proto_level != PROTO_LEVEL_MQTT311){
+		return CONN_ACK_BAD_PROTO;
+	} else if (!(can_broker_accept_next_client(broker))) {
+		return CONN_ACK_NOT_AVBL;
+	} else if (!is_client_authorised(conn_pck->pld.usr_name, conn_pck->pld.pswd)){
+		return CONN_ACK_BAD_AUTH;
+	} else{
+		return CONN_ACK_OK;
+	}
+}
+
+
+
+
+
+
+
+void add_new_client (broker_t * broker, conn_client_t client){
+
+}
+
 
 
 /*-------------------------------PUBLIHS-----------------------------------------*/

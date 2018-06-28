@@ -316,6 +316,7 @@ void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, socka
 void * m_malloc(size_t size);
 uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res);
 void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
+uint8_t broker_can_accept_conn(broker_t * broker, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
 void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
