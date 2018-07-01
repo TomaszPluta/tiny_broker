@@ -294,7 +294,8 @@ typedef struct {
 	uint8_t will_qos;
 	uint8_t will_retain;
 	sub_topic_t subs_topic[MAX_SUBS_TOPIC];
-	bool active;
+	bool exist;
+	bool conn_open;
 }  conn_client_t;
 
 typedef struct{

@@ -130,7 +130,7 @@ int main()
 	broker_t broker;
 	broker_init_by_given_net(&broker, &broker_net);
 	conn_result_t conn_result;
-	broker_handle_new_connection(&broker, &conn_pck, &sockaddr, &conn_result);
+
 
 	conn_result_t stat;
 	uint8_t net_add;
