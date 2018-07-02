@@ -12,13 +12,13 @@
 
 
 #define BROKER_TIMEOUT		60
-#define TOPIC_POS 			6
-#define M_HEAP_SIZE			512
-#define X_MALLOC				m_malloc
-
 #define X_HTONS(a) ((a>>8) | (a<<8))
 
-//extern local_host_t local_lost;
+
+bool was_clean_session_requested(conn_pck_t *conn_pck);
+static void broker_create_new_client(conn_client_t *new_client, const conn_pck_t * conn_pck,  sockaddr_t * sockaddr);
+void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id);
+
 
 
 
@@ -54,7 +54,7 @@ bool is_client_connected(broker_t * broker, char* client_id){
 }
 
 
-static inline uint8_t broker_get_client_pos(broker_t * broker, char* client_id){
+static inline uint8_t broker_get_client_pos_by_id(broker_t * broker, char* client_id){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
 		if (((broker->clients[i].exist)) && (strcmp(broker->clients[i].id, client_id) ==0 )) {
 			return i;
@@ -64,9 +64,19 @@ static inline uint8_t broker_get_client_pos(broker_t * broker, char* client_id){
 }
 
 
+static inline char * broker_get_client_id_by_socket(broker_t * broker, sockaddr_t * sockaddr){
+	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
+		if (((broker->clients[i].exist)) && (memcmp(broker->clients[i].sockaddr, sockaddr) ==0 )) {
+			broker->clients[i].id;
+		}
+	}
+	return NULL;
+}
+
+
 
 bool is_client_exist(broker_t * broker, char* client_id){
-	if (broker_get_client_pos(broker, client_id) != NOT_FOUND) {
+	if (broker_get_client_pos_by_id(broker, client_id) != NOT_FOUND) {
 		return true;
 	}
 	return false;
@@ -85,7 +95,7 @@ static inline bool can_broker_accept_next_client(broker_t * broker){
 
 
 bool broker_remove_client(broker_t * broker, char* client_id){
-	uint8_t pos = broker_get_client_pos(broker, client_id);
+	uint8_t pos = broker_get_client_pos_by_id(broker, client_id);
 	if (pos != NOT_FOUND){
 		memset(&broker->clients[pos], 0, sizeof (conn_client_t));
 		return true;
@@ -140,10 +150,19 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 	case PCKT_TYPE_CONNECT:{
 		conn_pck_t conn_pck;
 		broker_decode_connect(frame, &conn_pck);
-		conn_result_t conn_result;
-		broker_handle_new_connection(broker, &conn_pck, sockaddr, &conn_result);
+		broker_validate_conn(broker, &conn_pck);
+		bool sesion_present = false;
+		if (was_clean_session_requested(&conn_pck)
+			&& is_client_exist(broker, conn_pck.pld.client_id)){
+			broker_remove_client(broker, conn_pck.pld.client_id);
+			sesion_present = true;
+		}
+		uint8_t ack_code = broker_validate_conn(broker, &conn_pck);
+		conn_client_t new_client;
+		broker_create_new_client(&new_client, &conn_pck, sockaddr);
+		add_client(broker, &new_client);
 		conn_ack_t conn_ack;
-		encode_conn_ack(&conn_ack, &conn_result);
+		encode_conn_ack(&conn_ack, sesion_present, ack_code);
 		broker->net->send(NULL, sockaddr, (uint8_t*)&conn_ack, sizeof(conn_ack_t) );
 		break;
 	}
@@ -152,7 +171,7 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		broker_decode_publish(frame, &pub_pck);
 		publish_msg_to_subscribers(broker, &pub_pck);
 		publish_ack_t publish_ack;
-		encode_publish_ack(&publish_ack, pub_pck.var_head.packet_id);
+		encode_publish_ack(&publish_ack, *pub_pck.var_head.packet_id);
 		if (pub_pck.fix_head.ctrl_byte->QoS >=1){
 			broker->net->send(NULL, sockaddr, (uint8_t*)&publish_ack, sizeof(publish_ack_t) );
 		}
@@ -161,7 +180,8 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 	case PCKT_TYPE_SUBSCRIBE:{
 		sub_pck_t sub_pck;
 		broker_decode_subscribe(frame, &sub_pck);
-		add_subscribtion(broker, &sub_pck);
+		char* client_id = broker_get_client_id_by_socket(broker, sockaddr);
+		add_subscription(broker, client_id, &sub_pck);
 	//	sub_ack_t subscribe_ack;
 	//	encode_subscribe_ack(&subscribe_ack, );
 	//	broker->net->send(NULL, sockaddr, (uint8_t*)&subscribe_ack , sizeof(conn_ack_t) );
@@ -246,12 +266,12 @@ __attribute__( ( weak ) ) bool is_client_authorised (char* usr_name, char* pswd)
 }
 
 
-uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res){
+uint8_t * encode_conn_ack(conn_ack_t * header_ack, bool session_present, uint8_t code){
 	memset(header_ack, 0, sizeof (conn_ack_t));
 	header_ack->control_type = (CONTR_TYPE_CONNACK << 4);
 	header_ack->remainin_len = CONN_ACK_PLD_LEN;
-	header_ack->ack_flags.session_pres = conn_res->session_present;
-	header_ack->conn_code = conn_res->code;
+	header_ack->ack_flags.session_pres = session_present;
+	header_ack->conn_code = code;
 	return (uint8_t *)header_ack;
 }
 
@@ -285,57 +305,10 @@ static void broker_create_new_client(conn_client_t *new_client, const conn_pck_t
 	}
 }
 
-bool is_client_connected(broker_t * broker, char* client_id);
-
-// https://www.bevywise.com/developing-mqtt-clients/
-// https://morphuslabs.com/hacking-the-iot-with-mqtt-8edaf0d07b9b ack codes
-
-/*
-void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res){
-
-	if  (*conn_pck->var_head.proto_level != PROTO_LEVEL_MQTT311){
-		conn_res->session_present = false;
-		conn_res->code = CONN_ACK_BAD_PROTO;
-		return;
-	}
-
-	if (conn_pck->var_head.conn_flags->cleans_session){
-		if (broker_remove_client(broker, conn_pck->pld.client_id)){
-		}
-	}
-
-	if (is_client_connected(broker, conn_pck->pld.client_id)){
-		conn_res->session_present = true;
-		conn_res->code = CONN_ACK_OK;
-		return;
-	}
-
-	if (can_broker_accept_next_client(broker))
-	{
-		conn_client_t new_client;
-		broker_fill_new_client(&new_client, conn_pck, sockaddr);
-
-		if (is_client_authorised(new_client.username, new_client.password)){
-			add_client(broker, &new_client);
-			conn_res->session_present = false;
-			conn_res->code = CONN_ACK_OK;
-			return;
-		}else{
-			conn_res->session_present = false;
-			conn_res->code = CONN_ACK_BAD_AUTH;
-			return;
-		}
-	} else {
-		conn_res->session_present = false;
-		conn_res->code = CONN_ACK_NOT_AVBL;
-		return;
-	}
-}
-*/
 
 
 
-uint8_t broker_can_accept_conn(broker_t * broker, conn_pck_t *conn_pck){
+uint8_t broker_validate_conn(broker_t * broker, conn_pck_t *conn_pck){
 	if  (*conn_pck->var_head.proto_level != PROTO_LEVEL_MQTT311){
 		return CONN_ACK_BAD_PROTO;
 	} else if (!(can_broker_accept_next_client(broker))) {
@@ -365,8 +338,6 @@ bool was_clean_session_requested(conn_pck_t *conn_pck){
 	rem_length_t rem_length = decode_pck_len(&frame[pos]);
 	pub_pck->fix_head.rem_len = rem_length.value;
 	pos += rem_length.bytes_nb;
-
-
 
 	pub_pck->var_head.topic_name_len  = (uint16_t*) &frame[pos];
 	*pub_pck->var_head.topic_name_len = X_HTONS(*pub_pck->var_head.topic_name_len);
@@ -440,19 +411,29 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 }
 
 
-void add_subscribtion(conn_client_t *client, sub_pck_t * sub_pck){
+
+void add_subscription(broker_t * broker, char* client_id, sub_pck_t * sub_pck){
+	uint8_t pos = broker_get_client_pos_by_id(broker, client_id);
 	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){
+
+
+		if topic is not subscribed
+		&& if if topic is not subset
+			add topic
+			else
+				actualize qos
+
 		for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
 			/*to be sure that one topic is not subset of another filter*/
-			if (client->subs_topic[i].used){
-				if (client->subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_name_len){
-					if (memcmp(client->subs_topic[i].topic_name, sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_name_len)){
-						client->subs_topic[i].qos = *sub_pck->pld_topics[j].qos;
+			if (broker->clients[pos].subs_topic[i].used){
+				if (broker->clients[pos].subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_name_len){
+					if (memcmp(broker->clients[pos].subs_topic[i].topic_name, sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_name_len)){
+						broker->clients[pos].subs_topic[i].qos = *sub_pck->pld_topics[j].qos;
 					}
 				}
 			}else{
-				memcpy(&client->subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_name_len);
-				client->subs_topic[i].used = false;
+				memcpy(&broker->clients[pos].subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_name_len);
+				broker->clients[pos].subs_topic[i].used = true;
 				break;
 			}
 		}

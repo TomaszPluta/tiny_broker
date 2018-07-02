@@ -194,12 +194,6 @@ typedef struct{
 
 
 
-typedef struct{
-	bool session_present;
-	uint8_t code;
-}conn_result_t;
-
-
 
 /*---------publish-------------------*/
 
@@ -313,10 +307,10 @@ void broker_init_directly (broker_t * broker,
 		broker_net_rec receive,
 		broker_net_discon disconnect); //
 rem_length_t decode_pck_len (uint8_t * frame);
-void broker_handle_new_connection (broker_t *broker, conn_pck_t *conn_pck, sockaddr_t * sockaddr,  conn_result_t * conn_res);
-void * m_malloc(size_t size);
-uint8_t * encode_conn_ack(conn_ack_t * header_ack, conn_result_t * conn_res);
+
+uint8_t * encode_conn_ack(conn_ack_t * header_ack, bool session_present, uint8_t code);
 void broker_decode_connect(uint8_t * frame, conn_pck_t *conn_pck);
+uint8_t broker_validate_conn(broker_t * broker, conn_pck_t *conn_pck);
 uint8_t broker_can_accept_conn(broker_t * broker, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
