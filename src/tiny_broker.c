@@ -45,7 +45,7 @@ bool is_client_connected(broker_t * broker, char* client_id){
 
 	for (uint8_t i =0; i < MAX_CONN_CLIENTS; i++){
 		if ((broker->clients[i].exist)
-			&& (broker->clients[i].conn_open)
+			&& (broker->clients[i].connected)
 			&& (strcmp(broker->clients[i].id, client_id) ==0 )){
 			return true;
 		}
@@ -66,7 +66,7 @@ static inline uint8_t broker_get_client_pos_by_id(broker_t * broker, char* clien
 
 static inline char * broker_get_client_id_by_socket(broker_t * broker, sockaddr_t * sockaddr){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-		if (((broker->clients[i].exist)) && (memcmp(broker->clients[i].sockaddr, sockaddr) ==0 )) {
+		if (((broker->clients[i].connected)) && (memcmp(&broker->clients[i].sockaddr, sockaddr, sizeof(sockaddr_t)) ==0 )) {
 			broker->clients[i].id;
 		}
 	}
@@ -359,7 +359,7 @@ bool was_clean_session_requested(conn_pck_t *conn_pck){
 
 void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck){
 	for (uint8_t i =0; i < MAX_CONN_CLIENTS; i++){
-		if ((broker->clients[i].conn_open)){
+		if ((broker->clients[i].connected)){
 			for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
 				uint16_t len = *pub_pck->var_head.topic_name_len;
 				char* topic = pub_pck->var_head.topic_name;
@@ -399,11 +399,11 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 	const uint8_t fix_head_size = 2;
 	uint8_t topic_nb =0;
 	while (pos < (sub_pck->fix_head.rem_len + fix_head_size)){
-		sub_pck->pld_topics[topic_nb].topic_name_len = (uint16_t *)  &frame[pos];
-		*sub_pck->pld_topics[topic_nb].topic_name_len  = X_HTONS(*sub_pck->pld_topics[topic_nb].topic_name_len );
+		sub_pck->pld_topics[topic_nb].topic_len = (uint16_t *)  &frame[pos];
+		*sub_pck->pld_topics[topic_nb].topic_len  = X_HTONS(*sub_pck->pld_topics[topic_nb].topic_len );
 		pos += 2;
 		sub_pck->pld_topics[topic_nb].topic_name =  (char*)  &frame[pos];
-		pos += (*sub_pck->pld_topics[topic_nb].topic_name_len);
+		pos += (*sub_pck->pld_topics[topic_nb].topic_len);
 		sub_pck->pld_topics[topic_nb].qos = (uint8_t*) &frame[pos];
 		pos += 1;
 		topic_nb++;
@@ -411,36 +411,76 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 }
 
 
+//
+//void add_subscription(broker_t * broker, char* client_id, sub_pck_t * sub_pck){
+//	uint8_t pos = broker_get_client_pos_by_id(broker, client_id);
+//	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){ //topics in payload
+//
+//
+////		if topic is not subscribed
+////		&& if if topic is not subset
+////			add topic
+////			else
+////				actualize qos
+//
+//		for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
+//			/*to be sure that one topic is not subset of another filter*/
+//			if (broker->clients[pos].subs_topic[i].used){
+//				if (broker->clients[pos].subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_len){
+//					if (memcmp(broker->clients[pos].subs_topic[i].topic_name, sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_len)){
+//						broker->clients[pos].subs_topic[i].qos = *sub_pck->pld_topics[j].qos;
+//					}
+//				}
+//			}else{
+//				memcpy(&broker->clients[pos].subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_len);
+//				broker->clients[pos].subs_topic[i].used = true;
+//				break;
+//			}
+//		}
+//	}
+//}
 
-void add_subscription(broker_t * broker, char* client_id, sub_pck_t * sub_pck){
-	uint8_t pos = broker_get_client_pos_by_id(broker, client_id);
-	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){
 
 
-		if topic is not subscribed
-		&& if if topic is not subset
-			add topic
-			else
-				actualize qos
-
-		for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
-			/*to be sure that one topic is not subset of another filter*/
-			if (broker->clients[pos].subs_topic[i].used){
-				if (broker->clients[pos].subs_topic[i].topic_name_len == *sub_pck->pld_topics[j].topic_name_len){
-					if (memcmp(broker->clients[pos].subs_topic[i].topic_name, sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_name_len)){
-						broker->clients[pos].subs_topic[i].qos = *sub_pck->pld_topics[j].qos;
-					}
-				}
-			}else{
-				memcpy(&broker->clients[pos].subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_name_len);
-				broker->clients[pos].subs_topic[i].used = true;
-				break;
-			}
-		}
+void is_the_same_topic (char* topic1, char* topic2, uin8_t cmp_len){
+	if (memcmp(topic1, topic2, cmp_len) == 0){
+		return true;
 	}
+	return false;
 }
 
 
+
+void is_topic_subscribed (conn_client_t * client, char* topic, uin8_t cmp_len){
+	for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
+		if ((client->subs_topic[i].used)
+		&& (is_the_same_topic(&client->subs_topic[i].topic_name, topic, cmp_len))){
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+
+void add_subscription(conn_client_t * client, sub_pck_t * sub_pck){
+	for (uint8_t i=0; i < MAX_SUBS_TOPIC_IN_PLD; i++){
+//		if topic is not subscribed
+//		&& if if topic is not subset
+//			add topic
+//			else
+//				actualize qos
+
+		if (is_topic_subscribed(client, *sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_len)){
+			client->subs_topic[i].qos = *sub_pck->pld_topics[j].qos;  //actualize qos
+		} else{
+			memcpy(&client->subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_len);
+			client->subs_topic[i].used = true; //add topic directly
+			break;
+		}
+	}
+}
 
 
 

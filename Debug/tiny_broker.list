@@ -21,23 +21,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
   8 .ARM.attributes 00000029  00000000  00000000  00012254  2**0
                   CONTENTS, READONLY
-  9 .debug_info   000078c6  00000000  00000000  0001227d  2**0
+  9 .debug_info   00007923  00000000  00000000  0001227d  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_abbrev 00000f53  00000000  00000000  00019b43  2**0
+ 10 .debug_abbrev 00000f37  00000000  00000000  00019ba0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_aranges 000003a0  00000000  00000000  0001aa98  2**3
+ 11 .debug_aranges 000003a8  00000000  00000000  0001aad8  2**3
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000370  00000000  00000000  0001ae38  2**3
+ 12 .debug_ranges 00000378  00000000  00000000  0001ae80  2**3
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_line   00001b45  00000000  00000000  0001b1a8  2**0
+ 13 .debug_line   00001b71  00000000  00000000  0001b1f8  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_str    00001baa  00000000  00000000  0001cced  2**0
+ 14 .debug_str    00001bc5  00000000  00000000  0001cd69  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .comment      0000007c  00000000  00000000  0001e897  2**0
+ 15 .comment      0000007c  00000000  00000000  0001e92e  2**0
                   CONTENTS, READONLY
- 16 .debug_frame  00000dd8  00000000  00000000  0001e914  2**2
+ 16 .debug_frame  00000dfc  00000000  00000000  0001e9ac  2**2
                   CONTENTS, READONLY, DEBUGGING
- 17 .stabstr      0000003f  00000000  00000000  0001f6ec  2**0
+ 17 .stabstr      0000003f  00000000  00000000  0001f7a8  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -5573,7 +5573,7 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
  8002090:	75bb      	strb	r3, [r7, #22]
 	while (pos < (sub_pck->fix_head.rem_len + fix_head_size)){
  8002092:	e060      	b.n	8002156 <broker_decode_subscribe+0x138>
-		sub_pck->pld_topics[topic_nb].topic_name_len = (uint16_t *)  &frame[pos];
+		sub_pck->pld_topics[topic_nb].topic_len = (uint16_t *)  &frame[pos];
  8002094:	7dba      	ldrb	r2, [r7, #22]
  8002096:	7dfb      	ldrb	r3, [r7, #23]
  8002098:	6879      	ldr	r1, [r7, #4]
@@ -5586,7 +5586,7 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
  80020a6:	4403      	add	r3, r0
  80020a8:	330c      	adds	r3, #12
  80020aa:	6019      	str	r1, [r3, #0]
-		*sub_pck->pld_topics[topic_nb].topic_name_len  = X_HTONS(*sub_pck->pld_topics[topic_nb].topic_name_len );
+		*sub_pck->pld_topics[topic_nb].topic_len  = X_HTONS(*sub_pck->pld_topics[topic_nb].topic_len );
  80020ac:	7dba      	ldrb	r2, [r7, #22]
  80020ae:	6839      	ldr	r1, [r7, #0]
  80020b0:	4613      	mov	r3, r2
@@ -5642,7 +5642,7 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
  8002110:	4403      	add	r3, r0
  8002112:	3310      	adds	r3, #16
  8002114:	6019      	str	r1, [r3, #0]
-		pos += (*sub_pck->pld_topics[topic_nb].topic_name_len);
+		pos += (*sub_pck->pld_topics[topic_nb].topic_len);
  8002116:	7dba      	ldrb	r2, [r7, #22]
  8002118:	6839      	ldr	r1, [r7, #0]
  800211a:	4613      	mov	r3, r2

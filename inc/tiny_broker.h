@@ -51,6 +51,8 @@
 #define MAX_CONN_CLIENTS			(8)
 #define ADDR_SIZE					(4)
 
+#define MAX_SUBS_TOPIC_IN_PLD		(MAX_SUBS_TOPIC)
+
 #define PLD_START					(12)
 #define CLNT_ID_POS					(14)
 #define CLNT_ID_SIZE_MSB_POS		(12)
@@ -252,7 +254,7 @@ typedef struct{
 
 
 typedef struct{
-	uint16_t *topic_name_len;
+	uint16_t *topic_len;
 	char *topic_name;
 	uint8_t *qos;
 }sub_pld_topic_t;
@@ -289,7 +291,7 @@ typedef struct {
 	uint8_t will_retain;
 	sub_topic_t subs_topic[MAX_SUBS_TOPIC];
 	bool exist;
-	bool conn_open;
+	bool connected;
 }  conn_client_t;
 
 typedef struct{
