@@ -3,19 +3,19 @@ Archive member included to satisfy reference by file (symbol)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
                               src/startup_stm32f10x_md.o (__libc_init_array)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcmp.o)
-                              src/tiny_broker.o (memcmp)
+                              tiny_broker/tiny_broker.o (memcmp)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcpy-stub.o)
                               src/main.o (memcpy)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memset.o)
                               src/main.o (memset)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strcmp.o)
-                              src/tiny_broker.o (strcmp)
+                              tiny_broker/tiny_broker.o (strcmp)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strlen.o)
                               src/main.o (strlen)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strncmp.o)
-                              src/tiny_broker.o (strncmp)
+                              tiny_broker/tiny_broker.o (strncmp)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strncpy.o)
-                              src/tiny_broker.o (strncpy)
+                              tiny_broker/tiny_broker.o (strncpy)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(write.o)
                               src/tiny_printf.o (_write)
 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(errno.o)
@@ -1351,45 +1351,6 @@ Discarded input sections
                 0x0000000000000000       0x10 src/system_stm32f10x.o
  .text.SystemCoreClockUpdate
                 0x0000000000000000       0xd8 src/system_stm32f10x.o
- .text          0x0000000000000000        0x0 src/tiny_broker.o
- .data          0x0000000000000000        0x0 src/tiny_broker.o
- .bss           0x0000000000000000        0x0 src/tiny_broker.o
- .text.broker_init_directly
-                0x0000000000000000       0x4a src/tiny_broker.o
- .text.is_client_connected
-                0x0000000000000000       0x78 src/tiny_broker.o
- .text.broker_get_client_pos_by_id
-                0x0000000000000000       0x60 src/tiny_broker.o
- .text.broker_get_client_id_by_socket
-                0x0000000000000000       0x5a src/tiny_broker.o
- .text.is_client_exist
-                0x0000000000000000       0x26 src/tiny_broker.o
- .text.can_broker_accept_next_client
-                0x0000000000000000       0x48 src/tiny_broker.o
- .text.broker_remove_client
-                0x0000000000000000       0x44 src/tiny_broker.o
- .text.broker_first_free_pos_for_client
-                0x0000000000000000       0x48 src/tiny_broker.o
- .text.add_client
-                0x0000000000000000       0x36 src/tiny_broker.o
- .text.broker_packets_dispatcher
-                0x0000000000000000      0x1aa src/tiny_broker.o
- .text.is_client_authorised
-                0x0000000000000000       0x16 src/tiny_broker.o
- .text.encode_conn_ack
-                0x0000000000000000       0x42 src/tiny_broker.o
- .text.broker_create_new_client
-                0x0000000000000000      0x108 src/tiny_broker.o
- .text.broker_validate_conn
-                0x0000000000000000       0x58 src/tiny_broker.o
- .text.was_clean_session_requested
-                0x0000000000000000       0x28 src/tiny_broker.o
- .text.publish_msg_to_subscribers
-                0x0000000000000000       0xaa src/tiny_broker.o
- .text.encode_publish_ack
-                0x0000000000000000       0x28 src/tiny_broker.o
- .text.add_subscription
-                0x0000000000000000      0x142 src/tiny_broker.o
  .text          0x0000000000000000        0x0 src/tiny_printf.o
  .data          0x0000000000000000        0x0 src/tiny_printf.o
  .bss           0x0000000000000000        0x0 src/tiny_printf.o
@@ -1418,6 +1379,47 @@ Discarded input sections
  .debug_frame   0x0000000000000000      0x1bc src/tiny_printf.o
  .ARM.attributes
                 0x0000000000000000       0x33 src/tiny_printf.o
+ .text          0x0000000000000000        0x0 tiny_broker/tiny_broker.o
+ .data          0x0000000000000000        0x0 tiny_broker/tiny_broker.o
+ .bss           0x0000000000000000        0x0 tiny_broker/tiny_broker.o
+ .text.broker_init_directly
+                0x0000000000000000       0x4a tiny_broker/tiny_broker.o
+ .text.is_client_connected
+                0x0000000000000000       0x78 tiny_broker/tiny_broker.o
+ .text.broker_get_client_pos_by_id
+                0x0000000000000000       0x60 tiny_broker/tiny_broker.o
+ .text.is_client_exist
+                0x0000000000000000       0x26 tiny_broker/tiny_broker.o
+ .text.can_broker_accept_next_client
+                0x0000000000000000       0x48 tiny_broker/tiny_broker.o
+ .text.broker_remove_client
+                0x0000000000000000       0x44 tiny_broker/tiny_broker.o
+ .text.broker_first_free_pos_for_client
+                0x0000000000000000       0x48 tiny_broker/tiny_broker.o
+ .text.add_client
+                0x0000000000000000       0x36 tiny_broker/tiny_broker.o
+ .text.broker_packets_dispatcher
+                0x0000000000000000      0x186 tiny_broker/tiny_broker.o
+ .text.is_client_authorised
+                0x0000000000000000       0x16 tiny_broker/tiny_broker.o
+ .text.encode_conn_ack
+                0x0000000000000000       0x42 tiny_broker/tiny_broker.o
+ .text.broker_create_new_client
+                0x0000000000000000      0x108 tiny_broker/tiny_broker.o
+ .text.broker_validate_conn
+                0x0000000000000000       0x58 tiny_broker/tiny_broker.o
+ .text.was_clean_session_requested
+                0x0000000000000000       0x28 tiny_broker/tiny_broker.o
+ .text.publish_msg_to_subscribers
+                0x0000000000000000       0xaa tiny_broker/tiny_broker.o
+ .text.encode_publish_ack
+                0x0000000000000000       0x28 tiny_broker/tiny_broker.o
+ .text.is_the_same_topic
+                0x0000000000000000       0x2e tiny_broker/tiny_broker.o
+ .text.is_topic_subscribed
+                0x0000000000000000       0x66 tiny_broker/tiny_broker.o
+ .text.add_subscription
+                0x0000000000000000       0xdc tiny_broker/tiny_broker.o
  .text          0x0000000000000000        0x0 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
  .data          0x0000000000000000        0x0 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
  .bss           0x0000000000000000        0x0 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
@@ -1522,8 +1524,8 @@ LOAD src/mqtt_socket.o
 LOAD src/startup_stm32f10x_md.o
 LOAD src/stm32f1xx_it.o
 LOAD src/system_stm32f10x.o
-LOAD src/tiny_broker.o
 LOAD src/tiny_printf.o
+LOAD tiny_broker/tiny_broker.o
                 0x0000000000000080                malloc_getpagesize_P = 0x80
 START GROUP
 LOAD /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a
@@ -1766,19 +1768,19 @@ LOAD /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-
  .text.SetSysClockTo72
                 0x0000000008001b24      0x100 src/system_stm32f10x.o
  .text.broker_init_by_given_net
-                0x0000000008001c24       0x26 src/tiny_broker.o
+                0x0000000008001c24       0x26 tiny_broker/tiny_broker.o
                 0x0000000008001c24                broker_init_by_given_net
  .text.decode_pck_len
-                0x0000000008001c4a       0x78 src/tiny_broker.o
+                0x0000000008001c4a       0x78 tiny_broker/tiny_broker.o
                 0x0000000008001c4a                decode_pck_len
  .text.broker_decode_connect
-                0x0000000008001cc2      0x284 src/tiny_broker.o
+                0x0000000008001cc2      0x284 tiny_broker/tiny_broker.o
                 0x0000000008001cc2                broker_decode_connect
  .text.broker_decode_publish
-                0x0000000008001f46       0xd8 src/tiny_broker.o
+                0x0000000008001f46       0xd8 tiny_broker/tiny_broker.o
                 0x0000000008001f46                broker_decode_publish
  .text.broker_decode_subscribe
-                0x000000000800201e      0x14e src/tiny_broker.o
+                0x000000000800201e      0x14e tiny_broker/tiny_broker.o
                 0x000000000800201e                broker_decode_subscribe
  .text.__libc_init_array
                 0x000000000800216c       0x48 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
@@ -1923,7 +1925,7 @@ LOAD /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-
  .ARM.attributes
                 0x000000000000016a       0x33 src/system_stm32f10x.o
  .ARM.attributes
-                0x000000000000019d       0x33 src/tiny_broker.o
+                0x000000000000019d       0x33 tiny_broker/tiny_broker.o
  .ARM.attributes
                 0x00000000000001d0       0x2d /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
  .ARM.attributes
@@ -1936,17 +1938,17 @@ LOAD /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-
                 0x000000000000026e       0x1d /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/armv7-m/crtn.o
 OUTPUT(tiny_broker.elf elf32-littlearm)
 
-.debug_info     0x0000000000000000     0x7923
- .debug_info    0x0000000000000000     0x19b2 src/main.o
- .debug_info    0x00000000000019b2     0x15ff src/mqtt_client.o
- .debug_info    0x0000000000002fb1     0x1b2a src/mqtt_packet.o
- .debug_info    0x0000000000004adb      0xfac src/mqtt_socket.o
- .debug_info    0x0000000000005a87       0x7d src/startup_stm32f10x_md.o
- .debug_info    0x0000000000005b04      0x154 src/stm32f1xx_it.o
- .debug_info    0x0000000000005c58      0x4a7 src/system_stm32f10x.o
- .debug_info    0x00000000000060ff     0x1824 src/tiny_broker.o
+.debug_info     0x0000000000000000     0x7950
+ .debug_info    0x0000000000000000     0x19b4 src/main.o
+ .debug_info    0x00000000000019b4     0x15ff src/mqtt_client.o
+ .debug_info    0x0000000000002fb3     0x1b2a src/mqtt_packet.o
+ .debug_info    0x0000000000004add      0xfac src/mqtt_socket.o
+ .debug_info    0x0000000000005a89       0x7d src/startup_stm32f10x_md.o
+ .debug_info    0x0000000000005b06      0x154 src/stm32f1xx_it.o
+ .debug_info    0x0000000000005c5a      0x4a7 src/system_stm32f10x.o
+ .debug_info    0x0000000000006101     0x184f tiny_broker/tiny_broker.o
 
-.debug_abbrev   0x0000000000000000      0xf37
+.debug_abbrev   0x0000000000000000      0xf3b
  .debug_abbrev  0x0000000000000000      0x2bc src/main.o
  .debug_abbrev  0x00000000000002bc      0x270 src/mqtt_client.o
  .debug_abbrev  0x000000000000052c      0x26b src/mqtt_packet.o
@@ -1954,9 +1956,9 @@ OUTPUT(tiny_broker.elf elf32-littlearm)
  .debug_abbrev  0x00000000000009d9       0x12 src/startup_stm32f10x_md.o
  .debug_abbrev  0x00000000000009eb       0x78 src/stm32f1xx_it.o
  .debug_abbrev  0x0000000000000a63      0x16e src/system_stm32f10x.o
- .debug_abbrev  0x0000000000000bd1      0x366 src/tiny_broker.o
+ .debug_abbrev  0x0000000000000bd1      0x36a tiny_broker/tiny_broker.o
 
-.debug_aranges  0x0000000000000000      0x3a8
+.debug_aranges  0x0000000000000000      0x3b0
  .debug_aranges
                 0x0000000000000000       0x70 src/main.o
  .debug_aranges
@@ -1972,9 +1974,9 @@ OUTPUT(tiny_broker.elf elf32-littlearm)
  .debug_aranges
                 0x00000000000002a0       0x38 src/system_stm32f10x.o
  .debug_aranges
-                0x00000000000002d8       0xd0 src/tiny_broker.o
+                0x00000000000002d8       0xd8 tiny_broker/tiny_broker.o
 
-.debug_ranges   0x0000000000000000      0x378
+.debug_ranges   0x0000000000000000      0x380
  .debug_ranges  0x0000000000000000       0x60 src/main.o
  .debug_ranges  0x0000000000000060       0xa0 src/mqtt_client.o
  .debug_ranges  0x0000000000000100       0xc8 src/mqtt_packet.o
@@ -1982,19 +1984,19 @@ OUTPUT(tiny_broker.elf elf32-littlearm)
  .debug_ranges  0x0000000000000208       0x20 src/startup_stm32f10x_md.o
  .debug_ranges  0x0000000000000228       0x50 src/stm32f1xx_it.o
  .debug_ranges  0x0000000000000278       0x28 src/system_stm32f10x.o
- .debug_ranges  0x00000000000002a0       0xd8 src/tiny_broker.o
+ .debug_ranges  0x00000000000002a0       0xe0 tiny_broker/tiny_broker.o
 
-.debug_line     0x0000000000000000     0x1b71
- .debug_line    0x0000000000000000      0x3f8 src/main.o
- .debug_line    0x00000000000003f8      0x48e src/mqtt_client.o
- .debug_line    0x0000000000000886      0x5bd src/mqtt_packet.o
- .debug_line    0x0000000000000e43      0x31b src/mqtt_socket.o
- .debug_line    0x000000000000115e       0x7c src/startup_stm32f10x_md.o
- .debug_line    0x00000000000011da      0x21a src/stm32f1xx_it.o
- .debug_line    0x00000000000013f4      0x234 src/system_stm32f10x.o
- .debug_line    0x0000000000001628      0x549 src/tiny_broker.o
+.debug_line     0x0000000000000000     0x1bb2
+ .debug_line    0x0000000000000000      0x438 src/main.o
+ .debug_line    0x0000000000000438      0x48e src/mqtt_client.o
+ .debug_line    0x00000000000008c6      0x5bd src/mqtt_packet.o
+ .debug_line    0x0000000000000e83      0x31b src/mqtt_socket.o
+ .debug_line    0x000000000000119e       0x7c src/startup_stm32f10x_md.o
+ .debug_line    0x000000000000121a      0x21a src/stm32f1xx_it.o
+ .debug_line    0x0000000000001434      0x234 src/system_stm32f10x.o
+ .debug_line    0x0000000000001668      0x54a tiny_broker/tiny_broker.o
 
-.debug_str      0x0000000000000000     0x1bc5
+.debug_str      0x0000000000000000     0x1bdc
  .debug_str     0x0000000000000000      0xc51 src/main.o
                                         0xe35 (size before relaxing)
  .debug_str     0x0000000000000c51      0x5c3 src/mqtt_client.o
@@ -2007,8 +2009,8 @@ OUTPUT(tiny_broker.elf elf32-littlearm)
                                         0x255 (size before relaxing)
  .debug_str     0x0000000000001759      0x14e src/system_stm32f10x.o
                                         0x331 (size before relaxing)
- .debug_str     0x00000000000018a7      0x31e src/tiny_broker.o
-                                        0xcd2 (size before relaxing)
+ .debug_str     0x00000000000018a7      0x335 tiny_broker/tiny_broker.o
+                                        0xcf7 (size before relaxing)
 
 .comment        0x0000000000000000       0x7c
  .comment       0x0000000000000000       0x7c src/main.o
@@ -2018,19 +2020,19 @@ OUTPUT(tiny_broker.elf elf32-littlearm)
  .comment       0x000000000000007c       0x7d src/mqtt_socket.o
  .comment       0x000000000000007c       0x7d src/stm32f1xx_it.o
  .comment       0x000000000000007c       0x7d src/system_stm32f10x.o
- .comment       0x000000000000007c       0x7d src/tiny_broker.o
+ .comment       0x000000000000007c       0x7d tiny_broker/tiny_broker.o
 
-.debug_frame    0x0000000000000000      0xdfc
+.debug_frame    0x0000000000000000      0xe20
  .debug_frame   0x0000000000000000      0x1b8 src/main.o
  .debug_frame   0x00000000000001b8      0x200 src/mqtt_client.o
  .debug_frame   0x00000000000003b8      0x398 src/mqtt_packet.o
  .debug_frame   0x0000000000000750      0x11c src/mqtt_socket.o
  .debug_frame   0x000000000000086c      0x110 src/stm32f1xx_it.o
  .debug_frame   0x000000000000097c       0x98 src/system_stm32f10x.o
- .debug_frame   0x0000000000000a14      0x374 src/tiny_broker.o
- .debug_frame   0x0000000000000d88       0x2c /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
- .debug_frame   0x0000000000000db4       0x28 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x0000000000000ddc       0x20 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memset.o)
+ .debug_frame   0x0000000000000a14      0x398 tiny_broker/tiny_broker.o
+ .debug_frame   0x0000000000000dac       0x2c /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-init.o)
+ .debug_frame   0x0000000000000dd8       0x28 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x0000000000000e00       0x20 /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memset.o)
 
 .stabstr        0x0000000000000000       0x3f
  .stabstr       0x0000000000000000       0x3f /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(write.o)
@@ -2675,26 +2677,26 @@ _sdata                                            src/startup_stm32f10x_md.o
 _sidata                                           src/startup_stm32f10x_md.o
 _write                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(write.o)
                                                   src/tiny_printf.o
-add_subscription                                  src/tiny_broker.o
+add_subscription                                  tiny_broker/tiny_broker.o
 broker_conn                                       src/main.o
-broker_decode_connect                             src/tiny_broker.o
+broker_decode_connect                             tiny_broker/tiny_broker.o
                                                   src/main.o
-broker_decode_publish                             src/tiny_broker.o
+broker_decode_publish                             tiny_broker/tiny_broker.o
                                                   src/main.o
-broker_decode_subscribe                           src/tiny_broker.o
+broker_decode_subscribe                           tiny_broker/tiny_broker.o
                                                   src/main.o
 broker_discon                                     src/main.o
-broker_init_by_given_net                          src/tiny_broker.o
+broker_init_by_given_net                          tiny_broker/tiny_broker.o
                                                   src/main.o
-broker_init_directly                              src/tiny_broker.o
-broker_packets_dispatcher                         src/tiny_broker.o
+broker_init_directly                              tiny_broker/tiny_broker.o
+broker_packets_dispatcher                         tiny_broker/tiny_broker.o
 broker_rec                                        src/main.o
-broker_remove_client                              src/tiny_broker.o
+broker_remove_client                              tiny_broker/tiny_broker.o
 broker_send                                       src/main.o
-broker_validate_conn                              src/tiny_broker.o
-decode_pck_len                                    src/tiny_broker.o
-encode_conn_ack                                   src/tiny_broker.o
-encode_publish_ack                                src/tiny_broker.o
+broker_validate_conn                              tiny_broker/tiny_broker.o
+decode_pck_len                                    tiny_broker/tiny_broker.o
+encode_conn_ack                                   tiny_broker/tiny_broker.o
+encode_publish_ack                                tiny_broker/tiny_broker.o
 errno                                             /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(errno.o)
                                                   /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libnosys.a(write.o)
 fiprintf                                          src/tiny_printf.o
@@ -2703,21 +2705,22 @@ fputs                                             src/tiny_printf.o
 fwrite                                            src/tiny_printf.o
 g_pfnVectors                                      src/startup_stm32f10x_md.o
 iprintf                                           src/tiny_printf.o
-is_client_authorised                              src/tiny_broker.o
-is_client_connected                               src/tiny_broker.o
-is_client_exist                                   src/tiny_broker.o
+is_client_authorised                              tiny_broker/tiny_broker.o
+is_client_connected                               tiny_broker/tiny_broker.o
+is_client_exist                                   tiny_broker/tiny_broker.o
+is_the_same_topic                                 tiny_broker/tiny_broker.o
 local_host                                        src/main.o
 main                                              src/main.o
                                                   src/startup_stm32f10x_md.o
 memcmp                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcmp.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
 memcpy                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memcpy-stub.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
                                                   src/mqtt_packet.o
                                                   src/mqtt_client.o
                                                   src/main.o
 memset                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-memset.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
                                                   src/mqtt_client.o
                                                   src/main.o
 mqt_net_connect_cb                                src/main.o
@@ -2727,21 +2730,21 @@ mqtt_net_read_cb                                  src/main.o
 mqtt_net_write_cb                                 src/main.o
 packet_send_localhost                             src/main.o
 printf                                            src/tiny_printf.o
-publish_msg_to_subscribers                        src/tiny_broker.o
+publish_msg_to_subscribers                        tiny_broker/tiny_broker.o
 puts                                              src/tiny_printf.o
 siprintf                                          src/tiny_printf.o
 sprintf                                           src/tiny_printf.o
 strcmp                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strcmp.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
 strlen                                            /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strlen.o)
                                                   src/tiny_printf.o
                                                   src/mqtt_packet.o
                                                   src/main.o
 strncmp                                           /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strncmp.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
 strncpy                                           /opt/Atollic_TrueSTUDIO_for_STM32_x86_64_9.0.0/ARMTools/bin/../lib/gcc/arm-atollic-eabi/6.3.1/../../../../arm-atollic-eabi/lib/armv7-m/libc_nano.a(lib_a-strncpy.o)
-                                                  src/tiny_broker.o
+                                                  tiny_broker/tiny_broker.o
 ts_formatlength                                   src/tiny_printf.o
 ts_formatstring                                   src/tiny_printf.o
 ts_itoa                                           src/tiny_printf.o
-was_clean_session_requested                       src/tiny_broker.o
+was_clean_session_requested                       tiny_broker/tiny_broker.o

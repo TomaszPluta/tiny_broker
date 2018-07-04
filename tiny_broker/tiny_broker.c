@@ -7,6 +7,7 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 #include "tiny_broker.h"
 
 
@@ -67,7 +68,7 @@ static inline uint8_t broker_get_client_pos_by_id(broker_t * broker, char* clien
 static inline char * broker_get_client_id_by_socket(broker_t * broker, sockaddr_t * sockaddr){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
 		if (((broker->clients[i].connected)) && (memcmp(&broker->clients[i].sockaddr, sockaddr, sizeof(sockaddr_t)) ==0 )) {
-			broker->clients[i].id;
+			return broker->clients[i].id;
 		}
 	}
 	return NULL;
@@ -180,11 +181,7 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 	case PCKT_TYPE_SUBSCRIBE:{
 		sub_pck_t sub_pck;
 		broker_decode_subscribe(frame, &sub_pck);
-		char* client_id = broker_get_client_id_by_socket(broker, sockaddr);
-		add_subscription(broker, client_id, &sub_pck);
-	//	sub_ack_t subscribe_ack;
-	//	encode_subscribe_ack(&subscribe_ack, );
-	//	broker->net->send(NULL, sockaddr, (uint8_t*)&subscribe_ack , sizeof(conn_ack_t) );
+		//add subscription here
 		break;
 	}
 
@@ -442,7 +439,7 @@ void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 
 
 
-void is_the_same_topic (char* topic1, char* topic2, uin8_t cmp_len){
+bool is_the_same_topic (char* topic1, char* topic2, uint8_t cmp_len){
 	if (memcmp(topic1, topic2, cmp_len) == 0){
 		return true;
 	}
@@ -451,10 +448,10 @@ void is_the_same_topic (char* topic1, char* topic2, uin8_t cmp_len){
 
 
 
-void is_topic_subscribed (conn_client_t * client, char* topic, uin8_t cmp_len){
-	for (uint8_t j =0; j < MAX_SUBS_TOPIC; j++){
+static bool is_topic_subscribed (conn_client_t * client, char* topic, uint8_t cmp_len){
+	for (uint8_t i =0; i < MAX_SUBS_TOPIC; i++){
 		if ((client->subs_topic[i].used)
-		&& (is_the_same_topic(&client->subs_topic[i].topic_name, topic, cmp_len))){
+		&& (is_the_same_topic(client->subs_topic[i].topic_name, topic, cmp_len))){
 			return true;
 		}
 	}
@@ -466,16 +463,10 @@ void is_topic_subscribed (conn_client_t * client, char* topic, uin8_t cmp_len){
 
 void add_subscription(conn_client_t * client, sub_pck_t * sub_pck){
 	for (uint8_t i=0; i < MAX_SUBS_TOPIC_IN_PLD; i++){
-//		if topic is not subscribed
-//		&& if if topic is not subset
-//			add topic
-//			else
-//				actualize qos
-
-		if (is_topic_subscribed(client, *sub_pck->pld_topics[j].topic_name, *sub_pck->pld_topics[j].topic_len)){
-			client->subs_topic[i].qos = *sub_pck->pld_topics[j].qos;  //actualize qos
+		if (is_topic_subscribed(client, sub_pck->pld_topics[i].topic_name, *sub_pck->pld_topics[i].topic_len)){
+			client->subs_topic[i].qos = *sub_pck->pld_topics[i].qos;  //actualize qos
 		} else{
-			memcpy(&client->subs_topic[i], &sub_pck->pld_topics[j], *sub_pck->pld_topics[j].topic_len);
+			memcpy(&client->subs_topic[i], &sub_pck->pld_topics[i], *sub_pck->pld_topics[i].topic_len);
 			client->subs_topic[i].used = true; //add topic directly
 			break;
 		}

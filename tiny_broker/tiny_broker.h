@@ -317,4 +317,5 @@ uint8_t broker_can_accept_conn(broker_t * broker, conn_pck_t *conn_pck);
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
 void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
+void add_subscription(conn_client_t * client, sub_pck_t * sub_pck);
 #endif /* INC_TINY_BROKER_H_ */
