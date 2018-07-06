@@ -8,7 +8,27 @@
 
 
 
+
+/* The main.c file contains functional testing procedures. It uses WolfMqtt
+ * for encoding packet, and then tiny_broker is used for decoding.  Input
+ * and output should be the same.
+ */
+
+
+/*--------for testing purpouse: copy to buffer instead of sending by net----------*/
+#define LOCALHOST_BUFF_SIZE 	256
+typedef struct{
+uint8_t data[LOCALHOST_BUFF_SIZE];
+uint8_t len;
+uint8_t pos;
+}local_host_t;
+
+
 local_host_t local_host;
+
+void init_localhost(){
+	memset(&local_host, 0, LOCALHOST_BUFF_SIZE);
+}
 
 void packet_send_localhost(uint8_t * data, uint8_t size){
 	memcpy(local_host.data, data, size);
@@ -16,63 +36,49 @@ void packet_send_localhost(uint8_t * data, uint8_t size){
 }
 
 
-//int mqtt_send(void* socket_info, const void* buf, unsigned int count){
-//	l3_send_packet(tx_address, buf, count);
-//}
-//
+/*--------callbacs for WolfMqtt----------*/
 
-	int mqtt_message_cb(struct _MqttClient *client, MqttMessage *message, byte msg_new, byte msg_done){
-		return 1;
-	}
+int mqtt_message_cb(struct _MqttClient *client, MqttMessage *message, byte msg_new, byte msg_done){
+	return 1;
+}
 
+int mqt_net_connect_cb (void *context, const char* host, word16 port, int timeout_ms){
+	return 1;
+}
 
-	int mqt_net_connect_cb (void *context, const char* host, word16 port, int timeout_ms){
-		return 1;
-	}
+int mqtt_net_read_cb(void *context, byte* buf, int buf_len, int timeout_ms){
+	memcpy(buf, &local_host.data[local_host.pos], buf_len);
+	local_host.pos += buf_len;
+	return buf_len;
+	;
+}
 
-	int mqtt_net_read_cb(void *context, byte* buf, int buf_len, int timeout_ms){
-		memcpy(buf, &local_host.data[local_host.pos], buf_len);
-		local_host.pos += buf_len;
-		return buf_len;
-		;
-	}
+int mqtt_net_write_cb(void *context, const byte* buf, int buf_len, int timeout_ms){
+	packet_send_localhost((uint8_t*) buf, buf_len);
+	return 0;
+}
 
-
-//	int mqtt_net_write_cb(void *context, const byte* buf, int buf_len, int timeout_ms){
-//		uint8_t * broker_address = (uint8_t*) context;
-//		l3_send_packet(broker_address, buf, buf_len);
-//		return buf_len;
-//	}
-
-
-	int mqtt_net_write_cb(void *context, const byte* buf, int buf_len, int timeout_ms){
-		packet_send_localhost((uint8_t*) buf, buf_len);
-		return 0;
-	}
-
-
-	int mqtt_net_disconnect_cb(void *context){
-		return 0;
-	}
+int mqtt_net_disconnect_cb(void *context){
+	return 0;
+}
 
 
 
-	 int broker_conn(void *cntx, sockaddr_t * sockaddr){
-		 return 1;
-	 }
+int broker_conn(void *cntx, sockaddr_t * sockaddr){
+	return 1;
+}
 
-	 int broker_send(void *cntx, sockaddr_t * sockaddr, const uint8_t* buf, uint16_t buf_len){
-		 return 1;
-	 }
+int broker_send(void *cntx, sockaddr_t * sockaddr, const uint8_t* buf, uint16_t buf_len){
+	return 1;
+}
 
-	 int broker_rec(void *cntx, sockaddr_t * sockaddr, uint8_t* buf, uint16_t buf_len){
-		 return 1;
-	 }
+int broker_rec(void *cntx, sockaddr_t * sockaddr, uint8_t* buf, uint16_t buf_len){
+	return 1;
+}
 
-	 int broker_discon(void *context, sockaddr_t * sockaddr){
-		return 1;
-	 }
-
+int broker_discon(void *context, sockaddr_t * sockaddr){
+	return 1;
+}
 
 
 
@@ -83,28 +89,25 @@ void packet_send_localhost(uint8_t * data, uint8_t size){
 
 int main()
 {
+	/*-----general initialization-----*/
+	init_localhost();
+
 	MqttNet net;
-
-
-	memset(&local_host, 0, 256);
-
-
 	MqttClient client;
-
 	net.connect = mqt_net_connect_cb;
 	net.read = mqtt_net_read_cb;
 	net.write = mqtt_net_write_cb;
 	net.disconnect = mqtt_net_disconnect_cb;
 
-
 	uint8_t * tx_buf = local_host.data;
 	memset(tx_buf, 0, 64);
-	uint8_t tx_buf_len = 64;
+	const uint8_t tx_buf_len = 64;
 	uint8_t * rx_buf = local_host.data;
-	int rx_buf_len =64;
-	int cmd_timeout_ms =500;
+	const int rx_buf_len = 64;
+	int cmd_timeout_ms = 500;
 	MqttClient_Init(&client, &net, mqtt_message_cb, tx_buf, tx_buf_len, rx_buf, rx_buf_len, cmd_timeout_ms);
 
+	/*-----connect functional test-----*/
 	MqttConnect mqtt_con;
 	mqtt_con.clean_session =0;
 	mqtt_con.client_id = "rt1";
@@ -116,24 +119,33 @@ int main()
 	MqttClient_Connect(&client, &mqtt_con);
 
 	MqttEncode_Connect(client.tx_buf, 100, &mqtt_con);
-	conn_pck_t conn_pck;
-
-
-	broker_decode_connect(client.tx_buf, &conn_pck);
 	sockaddr_t sockaddr;
 	broker_net_t broker_net;
 	broker_net.connect = broker_conn;
 	broker_net.send = broker_send;
 	broker_net.receive = broker_rec;
 	broker_net.disconnect = broker_discon;
-
 	broker_t broker;
 	broker_init_by_given_net(&broker, &broker_net);
+	conn_pck_t conn_pck;
+	broker_decode_connect(client.tx_buf, &conn_pck);
+	broker_validate_conn(&broker, &conn_pck);
+			bool sesion_present = false;
+			if (was_clean_session_requested(&conn_pck)
+				&& is_client_exist(&broker, conn_pck.pld.client_id)){
+				broker_remove_client(&broker, conn_pck.pld.client_id);
+				sesion_present = true;
+			}
+			uint8_t ack_code = broker_validate_conn(&broker, &conn_pck);
+			tb_client_t new_client;
+			broker_create_new_client(&new_client, &conn_pck, &sockaddr);
+			add_client(&broker, &new_client);
+			conn_ack_t conn_ack;
+			encode_conn_ack(&conn_ack, sesion_present, ack_code);
 
-	uint8_t net_add;
 
+	/*-----publish functional test-----*/
 	MqttPublish publish;
-
 	const char* test_topic1 = "flat/livingroom/temp/1";
 	const char* test_topic2 = "flat/bedroom/humidity/2";
 	publish.topic_name = test_topic1;
@@ -151,7 +163,6 @@ int main()
 	pub_pck_t  pub_pck;
 	broker_decode_publish(local_host.data, &pub_pck);
 
-
     MqttTopic topics[2];
     topics[0].qos =1;
     topics[0].topic_filter = test_topic1;
@@ -160,7 +171,7 @@ int main()
     topics[1].topic_filter = test_topic2;
 
 
-
+	/*-----subscribe functional test-----*/
 	MqttSubscribe subscribe;
 	subscribe.packet_id = pck_id;
 	uint8_t topic_count = 2;
@@ -171,7 +182,8 @@ int main()
 	MqttEncode_Subscribe(client.tx_buf, client.tx_buf_len, &subscribe);
 	sub_pck_t sub_pck;
 	broker_decode_subscribe(client.tx_buf, &sub_pck);
-	//MqttClient_Subscribe(&client, &subscribe);
+	tb_client_t * subscribing_client = &broker.clients[0];
+	add_subscription(subscribing_client, &sub_pck);
 
 
     while(1)
