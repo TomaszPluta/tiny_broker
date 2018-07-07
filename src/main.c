@@ -181,9 +181,9 @@ int main()
 	memset(client.tx_buf, 0, 100);
 	MqttEncode_Subscribe(client.tx_buf, client.tx_buf_len, &subscribe);
 	sub_pck_t sub_pck;
-	broker_decode_subscribe(client.tx_buf, &sub_pck);
+	uint8_t topic_nb = broker_decode_subscribe(client.tx_buf, &sub_pck);
 	tb_client_t * subscribing_client = &broker.clients[0];
-	add_subscription(subscribing_client, &sub_pck);
+	add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb);
 
 
     while(1)
