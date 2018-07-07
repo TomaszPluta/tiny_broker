@@ -184,8 +184,8 @@ typedef struct{
 
 
 typedef struct{
-	uint16_t * topic_name_len;
-	char * topic_name;
+	uint16_t * len;
+	char * name;
 	uint16_t  * packet_id;
 }pub_var_head_t;
 
@@ -225,24 +225,23 @@ typedef struct{
 
 
 typedef struct{
-	uint16_t *topic_len;
-	char *topic_name;
+	uint16_t *len;
+	char *name;
 	uint8_t *qos;
-}sub_pld_topic_t;
+}sub_topic_ptr_t;
 
 
 typedef struct{
 	sub_fix_head_t fix_head;
 	sub_var_head_t var_head;
-	sub_pld_topic_t pld_topics[MAX_SUB_PLDT];
+	sub_topic_ptr_t pld_topics[MAX_SUB_PLDT];
 }sub_pck_t;
 
 
 typedef struct{
-	uint16_t topic_name_len;
-	char topic_name[MAX_TOPIC_NAME_SIZE];
+	uint16_t len;
+	char name[MAX_TOPIC_NAME_SIZE];
 	uint8_t qos;
-	bool used;
 }sub_topic_t;
 
 
@@ -317,7 +316,6 @@ void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
 void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id);
 
-void broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
-bool add_subscription(tb_client_t * client, sub_pck_t * sub_pck);
-
+uint8_t broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
+bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb);
 #endif /* INC_TINY_BROKER_H_ */
