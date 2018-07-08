@@ -111,6 +111,11 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		encode_subscribe_ack(&sub_ack, *sub_pck.var_head.packet_id, topic_nb, sub_result);
 		break;
 	}
+	case PCKT_TYPE_PINGREQ:{
+		ping_req_pck_t ping_req;
+		broker_decode_ping_req(frame, &ping_req);
+		break;
+	}
 	}
 }
 
@@ -455,11 +460,12 @@ bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, ui
 			result_list[i] = *sub_pck->pld_topics[i].qos;
 		} else {
 			bool res = add_new_subscription_to_client(client, &sub_pck->pld_topics[i]);
+			result_list[i] = *sub_pck->pld_topics[i].qos;
 			if (!res){
 				for (uint8_t j = i; j < topic_nb; j++){
 					result_list[j] = SUB_ACK_FAIL;
 				}
-				return false;
+			return false;
 			}
 		}
 		i++;
@@ -469,10 +475,29 @@ bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, ui
 
 
 
-void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list){
+void  encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list){
 	sub_ack->control_type = (PCKT_TYPE_SUBACK << 4);
 	sub_ack->remainin_len = SUB_ACK_LEN;  //(?)
 	sub_ack->packet_id = pckt_id;
 	memcpy(sub_ack->payload, result_list, topic_nb);
 }
 
+
+
+
+/*-------------------------------PING-----------------------------------------*/
+
+
+void broker_decode_ping_req(uint8_t* frame, ping_req_pck_t * ping_pck){
+	uint8_t pos = 0;
+	ping_pck->fix_head.ctrl_byte = (ping_ctrl_byte_t*) &frame[pos];
+	pos++;
+	ping_pck->fix_head.rem_len = (uint8_t *) &frame[pos];
+}
+
+
+void broker_encode_ping_rsp(ping_rsp_pck_t* ping_pck){
+	ping_pck->fix_head.ctrl_byte.type = PCKT_TYPE_PINGRESP ;
+	ping_pck->fix_head.ctrl_byte.reserved = 0;
+	ping_pck->fix_head.rem_len = 0;
+}

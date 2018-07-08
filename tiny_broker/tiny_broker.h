@@ -250,6 +250,33 @@ typedef struct{
 }sub_ack_t;
 
 
+/*---------ping-------------------*/
+
+typedef struct{
+	uint8_t reserved :4;
+	uint8_t type :4;
+}ping_ctrl_byte_t;
+
+
+typedef struct{
+	ping_ctrl_byte_t* ctrl_byte;
+	uint8_t *rem_len;
+}ping_req_fix_head_t;
+
+typedef struct{
+	ping_ctrl_byte_t ctrl_byte;
+	uint8_t rem_len;
+}ping_rsp_fix_head_t;
+
+
+typedef struct{
+	ping_req_fix_head_t fix_head;
+}ping_req_pck_t;
+
+typedef struct{
+	ping_rsp_fix_head_t fix_head;
+}ping_rsp_pck_t;
+
 
 /*---------broker-------------------*/
 
@@ -325,4 +352,9 @@ void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id);
 uint8_t broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
 bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb, uint8_t * result_list);
 void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list);
+
+
+void broker_decode_ping_req(uint8_t* frame, ping_req_pck_t * ping_pck);
+void broker_encode_ping_rsp(ping_rsp_pck_t* ping_pck);
+
 #endif /* INC_TINY_BROKER_H_ */

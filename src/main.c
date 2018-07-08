@@ -201,6 +201,13 @@ int main()
 	add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb, result_list);
 
 
+
+	MqttEncode_Ping(client.tx_buf, client.tx_buf_len);
+	ping_req_pck_t ping_req;
+	broker_decode_ping_req(client.tx_buf, &ping_req);
+	ping_rsp_pck_t ping_rsp;
+	broker_encode_ping_rsp(&ping_rsp);
+
     while(1)
     {    
 
