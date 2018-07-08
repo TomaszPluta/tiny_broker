@@ -13,12 +13,17 @@
 
 
 /*
- * Dynamic memory allocation is not allowed. Field "exist" in "tb_client" distinguish
- * if slot is used or could be overwritten. Alternative way - memseting  unused
- * clients could be better way.
+ *
+ * TODO:
+ *  - Handling QOS > 0 in publishing and subscription
+ *  - PING request/response
+ *  - Disconnection
+ *  - Unsubscribing
+ *  - Rest of dispatcher
+ *  - data base connector for authorisation (nice to have)
+ *
+ *   Dynamic memory allocation should not be used in any case.
  */
-
-
 
 /*-------------------------------INITIALIZE-----------------------------------------*/
 
@@ -111,22 +116,13 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 
 uint8_t broker_get_client_pos_by_id(broker_t * broker, char* client_id){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-		if (((broker->clients[i].exist)) && (strcmp(broker->clients[i].id, client_id) ==0 )) {
+		if (strcmp(broker->clients[i].id, client_id) ==0 ) {
 			return i;
 		}
 	}
 	return NOT_FOUND;
 }
 
-
-char * broker_get_client_id_by_socket(broker_t * broker, sockaddr_t * sockaddr){
-	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-		if (((broker->clients[i].connected)) && (memcmp(&broker->clients[i].sockaddr, sockaddr, sizeof(sockaddr_t)) ==0 )) {
-			return broker->clients[i].id;
-		}
-	}
-	return NULL;
-}
 
 
 tb_client_t * broker_get_client_by_socket(broker_t * broker, sockaddr_t * sockaddr){
@@ -150,22 +146,17 @@ bool is_client_exist(broker_t * broker, char* client_id){
 bool is_client_connected(broker_t * broker, char* client_id){
 
 	for (uint8_t i =0; i < MAX_CONN_CLIENTS; i++){
-		if ((broker->clients[i].exist)
-			&& (broker->clients[i].connected)
-			&& (strcmp(broker->clients[i].id, client_id) ==0 )){
+		if ((broker->clients[i].connected) && (strcmp(broker->clients[i].id, client_id)==0 )){
 			return true;
 		}
 	}
 	return false;
 }
 
-__attribute__( ( weak ) ) bool is_client_authorised (char* usr_name, char* pswd){
-	return true;
-}
 
 static inline bool can_broker_accept_next_client(broker_t * broker){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-		if (!(broker->clients[i].exist)){
+		if ((broker->clients[i].id[0]) == 0){
 			return true;
 		}
 	}
@@ -185,7 +176,7 @@ bool broker_remove_client(broker_t * broker, char* client_id){
 
 static uint8_t broker_first_free_pos_for_client(broker_t * broker){
 	for (uint8_t i = 0; i < MAX_CONN_CLIENTS; i++){
-		if (!(broker->clients[i].exist)){
+		if (!(broker->clients[i].id[0])){
 			return i;
 		}
 	}
@@ -199,6 +190,9 @@ void add_client (broker_t * broker, tb_client_t * new_client){
 }
 
 
+__attribute__( ( weak ) ) bool is_client_authorised (char* usr_name, char* pswd){
+	return true;
+}
 
 
 
@@ -363,8 +357,8 @@ void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck){
 
 
 void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id){
-	publish_ack->control_type = (PCKT_TYPE_PUBLISH << 4);
-	publish_ack->remainin_len = 2;
+	publish_ack->control_type = (PCKT_TYPE_PUBACK << 4);
+	publish_ack->remainin_len = PUB_ACK_LEN;
 	publish_ack->packet_id = pckt_id;
 }
 
@@ -428,7 +422,7 @@ static void actualize_subs_topic_qos(sub_topic_t * topic, uint8_t qos){
 
 
 static uint8_t find_first_free_slot_for_subs_topic(tb_client_t * client){
-	for (uint8_t i=0; i < MAX_SUBS_TOPIC_IN_PLD; i++){
+	for (uint8_t i=0; i < MAX_SUB_PLD; i++){
 		 if (!(client->subs_topic[i].name[0])){
 			 return i;
 		 }
@@ -465,3 +459,13 @@ bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, ui
 	}
 	return true;
 }
+
+
+
+void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t * codes_list){
+	sub_ack->control_type = (PCKT_TYPE_SUBACK << 4);
+	sub_ack->remainin_len = SUB_ACK_LEN;
+	sub_ack->packet_id = pckt_id;
+	memcpy(sub_ack->payload, codes_list, MAX_SUBS_TOPIC);
+}
+

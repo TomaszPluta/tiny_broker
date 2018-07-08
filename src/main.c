@@ -89,6 +89,12 @@ int broker_discon(void *context, sockaddr_t * sockaddr){
 
 int main()
 {
+
+/*
+* Some artificial situations, only for functional testing.
+* WolfMQTT used as MQTT Client to check standard compatibility.
+*/
+
 	/*-----general initialization-----*/
 	init_localhost();
 
@@ -130,18 +136,26 @@ int main()
 	conn_pck_t conn_pck;
 	broker_decode_connect(client.tx_buf, &conn_pck);
 	broker_validate_conn(&broker, &conn_pck);
-			bool sesion_present = false;
-			if (was_clean_session_requested(&conn_pck)
-				&& is_client_exist(&broker, conn_pck.pld.client_id)){
-				broker_remove_client(&broker, conn_pck.pld.client_id);
-				sesion_present = true;
-			}
-			uint8_t ack_code = broker_validate_conn(&broker, &conn_pck);
-			tb_client_t new_client;
-			broker_create_new_client(&new_client, &conn_pck, &sockaddr);
-			add_client(&broker, &new_client);
-			conn_ack_t conn_ack;
-			encode_conn_ack(&conn_ack, sesion_present, ack_code);
+	bool sesion_present = false;
+	if (was_clean_session_requested(&conn_pck)
+		&& is_client_exist(&broker, conn_pck.pld.client_id)){
+		broker_remove_client(&broker, conn_pck.pld.client_id);
+		sesion_present = true;
+	}
+	uint8_t ack_code = broker_validate_conn(&broker, &conn_pck);
+	tb_client_t new_client;
+	broker_create_new_client(&new_client, &conn_pck, &sockaddr);
+	add_client(&broker, &new_client);
+	conn_ack_t conn_ack;
+	encode_conn_ack(&conn_ack, sesion_present, ack_code);
+
+
+	/* directly adding next one */
+	memcpy (new_client.id, "rt2", sizeof("rt2"));
+
+	broker_create_new_client(&new_client, &conn_pck, &sockaddr);
+	add_client(&broker, &new_client);
+
 
 
 	/*-----publish functional test-----*/
