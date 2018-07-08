@@ -2,7 +2,6 @@
 
 /*
  * tiny_broker.h
- *
  *  Created on: 10.05.2018
  *      Author: tomek
  */
@@ -15,13 +14,24 @@
 #include "mqtt_socket.h"
 #include "tiny_netinet.h"
 
+
+/*configurations*/
 #define DEFAULT_BROKER_TIMEOUT		(100)
+#define ADDR_SIZE					(4)
+#define PROTO_LEVEL_MQTT311			(4)
 #define MAX_PLD_SIZE				(128)
-#define MAX_SUB_PLDT				(8)
+#define MAX_SUB_PLD					(8)
+#define MAX_SUBS_TOPIC 				(8)
+#define MAX_TOPIC_NAME_SIZE 		(32)
+#define MAX_WILL_MSG_SIZE			(32)
+#define MAX_USR_NAME_SIZE			(32)
+#define MAX_PSWD_NAME_SIZE			(32)
+#define MAX_ID_SIZE					(32)
+#define NOT_FOUND					(255)
+#define MAX_CONN_CLIENTS			(8)
 
-#define X_HTONS(a) 					((a>>8) | (a<<8))
 
-
+/*protocol defined packet types*/
 #define PCKT_TYPE_CONNECT			(1)
 #define PCKT_TYPE_CONNACK			(2)
 #define PCKT_TYPE_PUBLISH			(3)
@@ -38,27 +48,8 @@
 #define PCKT_TYPE_DISCONNECT		(14)
 
 
-
-
-
-#define MAX_SUBS_TOPIC 				(8)
-#define MAX_TOPIC_NAME_SIZE 		(32)
-#define MAX_WILL_MSG_SIZE			(32)
-#define MAX_USR_NAME_SIZE			(32)
-#define MAX_PSWD_NAME_SIZE			(32)
-#define MAX_ID_SIZE					(32)
-#define NOT_FOUND					(255)
-#define MAX_CONN_CLIENTS			(8)
-#define ADDR_SIZE					(4)
-
-
-#define PLD_START					(12)
-#define CLNT_ID_POS					(14)
-#define CLNT_ID_SIZE_MSB_POS		(12)
-#define CLNT_ID_SIZE_LSB_POS		(13)
-
-
-
+/*header flags*/
+#define SESSION_PRESENT				(1<<0)
 #define CLEAN_S_FLAG				(1<<1)
 #define WILL_FLAG					(1<<2)
 #define WILL_QOS_FLAG				(3<<3)
@@ -67,13 +58,14 @@
 #define PSWD_FLAG					(1<<7)
 
 
-#define SESSION_PRESENT				(1<<0)
-#define STRINGS_EQUAL				(0)
-#define PROTO_LEVEL_MQTT311			(4)
-#define MAX_SUBS_TOPIC_IN_PLD		(MAX_SUBS_TOPIC)
+/*ack flags*/
 #define CONN_ACK_PLD_LEN			(2)
+#define CONTR_TYPE_CONNACK 			(2)
+#define PUB_ACK_LEN					(2)
+#define SUB_ACK_LEN					(3)
 
 
+/*connection ack coded*/
 #define CONN_ACK_OK					(0)
 #define CONN_ACK_BAD_PROTO			(1)
 #define CONN_ACK_BAD_ID				(2)
@@ -82,13 +74,18 @@
 #define CONN_ACK_BAD_AUTH			(5)
 #define CONN_ACK_OK_SESS_PRESENT	(0)
 
-#define CONTR_TYPE_CONNACK 			(2)
+/*misc*/
+#define X_HTONS(a) 					((a>>8) | (a<<8))
+#define STRINGS_EQUAL				(0)
 
 
-
-
+/* Shadowing of "sockaddr_in" definitions by broker's own type. It could be easy replaced here
+ * without messing in broker's type*/
 typedef struct sockaddr_in sockaddr_t;
 
+
+/*Broker callbacks for mantaining network transmission. It is no needed to use TCP/IP, only compliance
+ * with "sockaddr_t" type is needed*/
 typedef int (*broker_net_conn)(void *cntx, sockaddr_t * sockaddr);
 typedef int (*broker_net_send)(void *cntx, sockaddr_t * sockaddr, const uint8_t* buf, uint16_t buf_len);
 typedef int (*broker_net_rec)(void *cntx, sockaddr_t * sockaddr, uint8_t* buf, uint16_t buf_len);
@@ -234,7 +231,7 @@ typedef struct{
 typedef struct{
 	sub_fix_head_t fix_head;
 	sub_var_head_t var_head;
-	sub_topic_ptr_t pld_topics[MAX_SUB_PLDT];
+	sub_topic_ptr_t pld_topics[MAX_SUB_PLD];
 }sub_pck_t;
 
 
@@ -243,6 +240,15 @@ typedef struct{
 	char name[MAX_TOPIC_NAME_SIZE];
 	uint8_t qos;
 }sub_topic_t;
+
+
+5490
+typedef struct{
+	uint8_t control_type;
+	uint8_t remainin_len;
+	uint16_t packet_id;
+	uint8_t payload[MAX_SUB_PLD];
+}sub_ack_t;
 
 
 
@@ -260,7 +266,6 @@ typedef struct {
 	uint8_t will_qos;
 	uint8_t will_retain;
 	sub_topic_t subs_topic[MAX_SUBS_TOPIC];
-	bool exist;
 	bool connected;
 }  tb_client_t;
 
@@ -289,6 +294,9 @@ typedef struct{
 
 
 
+
+/*----------------function declaration---------------*/
+
 /*there is two way to initialize broker - by given net struct or all callback directly*/
 void broker_init_by_given_net(broker_t * broker, broker_net_t * broker_net);
 void broker_init_directly (broker_t * broker,
@@ -310,7 +318,6 @@ void broker_create_new_client(tb_client_t *new_client, const conn_pck_t * conn_p
 void add_client (broker_t * broker, tb_client_t * new_client);
 tb_client_t * broker_get_client_by_socket(broker_t * broker, sockaddr_t * sockaddr);
 bool broker_remove_client(broker_t * broker, char* client_id);
-
 
 void broker_decode_publish(uint8_t* frame, pub_pck_t * pub_pck);
 void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
