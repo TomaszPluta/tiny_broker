@@ -105,7 +105,10 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		sub_pck_t sub_pck;
 		uint8_t topic_nb = broker_decode_subscribe(frame, &sub_pck);
 		tb_client_t * subscribing_client = broker_get_client_by_socket(broker, sockaddr);
-		add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb);
+		uint8_t sub_result[MAX_SUBS_TOPIC];
+		add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb, sub_result);
+		sub_ack_t sub_ack;
+		encode_subscribe_ack(&sub_ack, *sub_pck.var_head.packet_id, topic_nb, sub_result);
 		break;
 	}
 	}
@@ -422,7 +425,7 @@ static void actualize_subs_topic_qos(sub_topic_t * topic, uint8_t qos){
 
 
 static uint8_t find_first_free_slot_for_subs_topic(tb_client_t * client){
-	for (uint8_t i=0; i < MAX_SUB_PLD; i++){
+	for (uint8_t i=0; i < MAX_SUBS_TOPIC; i++){
 		 if (!(client->subs_topic[i].name[0])){
 			 return i;
 		 }
@@ -443,15 +446,19 @@ static bool add_new_subscription_to_client(tb_client_t * client, sub_topic_ptr_t
 }
 
 
-bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb){
+bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb, uint8_t * result_list){
 	uint8_t i=0;
 	while (i < topic_nb){
 		uint8_t pos  = get_subscribed_topic_pos(client, sub_pck->pld_topics[i].name, *sub_pck->pld_topics[i].len);
 		if (pos != NOT_FOUND){
 			actualize_subs_topic_qos(&client->subs_topic[pos],  *sub_pck->pld_topics[i].qos);
+			result_list[i] = *sub_pck->pld_topics[i].qos;
 		} else {
 			bool res = add_new_subscription_to_client(client, &sub_pck->pld_topics[i]);
 			if (!res){
+				for (uint8_t j = i; j < topic_nb; j++){
+					result_list[j] = SUB_ACK_FAIL;
+				}
 				return false;
 			}
 		}
@@ -462,10 +469,10 @@ bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, ui
 
 
 
-void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t * codes_list){
+void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list){
 	sub_ack->control_type = (PCKT_TYPE_SUBACK << 4);
-	sub_ack->remainin_len = SUB_ACK_LEN;
+	sub_ack->remainin_len = SUB_ACK_LEN;  //(?)
 	sub_ack->packet_id = pckt_id;
-	memcpy(sub_ack->payload, codes_list, MAX_SUBS_TOPIC);
+	memcpy(sub_ack->payload, result_list, topic_nb);
 }
 

@@ -16,12 +16,11 @@
 
 
 /*configurations*/
-#define DEFAULT_BROKER_TIMEOUT		(100)
+#define DEFAULT_BROKER_TIMEOUT  	(100)
 #define ADDR_SIZE					(4)
-#define PROTO_LEVEL_MQTT311			(4)
+#define PROTO_LEVEL_MQTT311 		(4)
 #define MAX_PLD_SIZE				(128)
-#define MAX_SUB_PLD					(8)
-#define MAX_SUBS_TOPIC 				(8)
+#define MAX_SUBS_TOPIC  			(8)
 #define MAX_TOPIC_NAME_SIZE 		(32)
 #define MAX_WILL_MSG_SIZE			(32)
 #define MAX_USR_NAME_SIZE			(32)
@@ -63,7 +62,7 @@
 #define CONTR_TYPE_CONNACK 			(2)
 #define PUB_ACK_LEN					(2)
 #define SUB_ACK_LEN					(3)
-
+#define SUB_ACK_FAIL				(80)
 
 /*connection ack coded*/
 #define CONN_ACK_OK					(0)
@@ -231,7 +230,7 @@ typedef struct{
 typedef struct{
 	sub_fix_head_t fix_head;
 	sub_var_head_t var_head;
-	sub_topic_ptr_t pld_topics[MAX_SUB_PLD];
+	sub_topic_ptr_t pld_topics[MAX_SUBS_TOPIC];
 }sub_pck_t;
 
 
@@ -242,12 +241,12 @@ typedef struct{
 }sub_topic_t;
 
 
-5490
+
 typedef struct{
 	uint8_t control_type;
 	uint8_t remainin_len;
 	uint16_t packet_id;
-	uint8_t payload[MAX_SUB_PLD];
+	uint8_t payload[MAX_SUBS_TOPIC];
 }sub_ack_t;
 
 
@@ -324,5 +323,6 @@ void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
 void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id);
 
 uint8_t broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
-bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb);
+bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb, uint8_t * result_list);
+void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list);
 #endif /* INC_TINY_BROKER_H_ */

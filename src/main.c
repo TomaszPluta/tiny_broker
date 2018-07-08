@@ -197,7 +197,8 @@ int main()
 	sub_pck_t sub_pck;
 	uint8_t topic_nb = broker_decode_subscribe(client.tx_buf, &sub_pck);
 	tb_client_t * subscribing_client = &broker.clients[0];
-	add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb);
+	uint8_t result_list[MAX_SUBS_TOPIC];
+	add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb, result_list);
 
 
     while(1)
