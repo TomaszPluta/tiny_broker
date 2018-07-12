@@ -16,11 +16,11 @@
  *
  * TODO:
  *  - Handling QOS > 0 in publishing and subscription
- *  - PING request/response
+ *  - Retain messages
  *  - Disconnection
- *  - Unsubscribing
- *  - Rest of dispatcher
- *  - data base connector for authorisation (nice to have)
+ *  - Deleting client after timeout
+ *  - Rest part of dispatcher
+ *  - dData base connector for authorization (nice to have)
  *
  *   Dynamic memory allocation should not be used in any case.
  */
@@ -106,9 +106,16 @@ void broker_packets_dispatcher (broker_t * broker, uint8_t * frame, sockaddr_t *
 		uint8_t topic_nb = broker_decode_subscribe(frame, &sub_pck);
 		tb_client_t * subscribing_client = broker_get_client_by_socket(broker, sockaddr);
 		uint8_t sub_result[MAX_SUBS_TOPIC];
-		add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb, sub_result);
+		add_subscriptions_from_list(subscribing_client, sub_pck.pld_topics, topic_nb, sub_result);
 		sub_ack_t sub_ack;
 		encode_subscribe_ack(&sub_ack, *sub_pck.var_head.packet_id, topic_nb, sub_result);
+		break;
+	}
+	case PCKT_TYPE_UNSUBSCRIBE:{
+		unsub_pck_t unsub_pck;
+	    uint8_t topic_nb =  broker_decode_unsubscribe(frame, &unsub_pck);
+	    tb_client_t * unsubscribing_client = broker_get_client_by_socket(broker, sockaddr);
+		delete_listed_subscriptions(unsubscribing_client, unsub_pck.pld_topics, topic_nb);
 		break;
 	}
 	case PCKT_TYPE_PINGREQ:{
@@ -378,7 +385,7 @@ void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id){
 uint8_t  broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 	uint8_t pos = 0;
 
-	sub_pck->fix_head.subs_ctrl_byte = (subs_ctrl_byte_t *) frame;
+	sub_pck->fix_head.ctrl_byte = (ctrl_byte_t *) frame;
 	pos++;
 	rem_length_t rem_length = decode_pck_len(&frame[pos]);
 	sub_pck->fix_head.rem_len = rem_length.value;
@@ -405,7 +412,7 @@ uint8_t  broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck){
 }
 
 
-bool is_the_same_topic (char* topic1, char* topic2, uint8_t cmp_len){
+static bool is_the_same_topic (char* topic1, char* topic2, uint8_t cmp_len){
 	if (memcmp(topic1, topic2, cmp_len) == 0){
 		return true;
 	}
@@ -451,16 +458,17 @@ static bool add_new_subscription_to_client(tb_client_t * client, sub_topic_ptr_t
 }
 
 
-bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb, uint8_t * result_list){
+
+bool add_subscriptions_from_list(tb_client_t * client, sub_topic_ptr_t *topic_list, uint8_t topic_nb, uint8_t * result_list){
 	uint8_t i=0;
 	while (i < topic_nb){
-		uint8_t pos  = get_subscribed_topic_pos(client, sub_pck->pld_topics[i].name, *sub_pck->pld_topics[i].len);
+		uint8_t pos  = get_subscribed_topic_pos(client, topic_list[i].name, *topic_list[i].len);
 		if (pos != NOT_FOUND){
-			actualize_subs_topic_qos(&client->subs_topic[pos],  *sub_pck->pld_topics[i].qos);
-			result_list[i] = *sub_pck->pld_topics[i].qos;
+			actualize_subs_topic_qos(&client->subs_topic[pos], *topic_list[i].qos);
+			result_list[i] = *topic_list[i].qos;
 		} else {
-			bool res = add_new_subscription_to_client(client, &sub_pck->pld_topics[i]);
-			result_list[i] = *sub_pck->pld_topics[i].qos;
+			bool res = add_new_subscription_to_client(client, &topic_list[i]);
+			result_list[i] = *topic_list[i].qos;
 			if (!res){
 				for (uint8_t j = i; j < topic_nb; j++){
 					result_list[j] = SUB_ACK_FAIL;
@@ -474,7 +482,6 @@ bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, ui
 }
 
 
-
 void  encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list){
 	sub_ack->control_type = (PCKT_TYPE_SUBACK << 4);
 	sub_ack->remainin_len = SUB_ACK_LEN;  //(?)
@@ -482,6 +489,65 @@ void  encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_
 	memcpy(sub_ack->payload, result_list, topic_nb);
 }
 
+
+
+
+
+/*-------------------------------UNSUBSCRIBE-----------------------------------------*/
+uint8_t  broker_decode_unsubscribe(uint8_t* frame, unsub_pck_t * unsub_pck){
+	uint8_t pos = 0;
+
+	unsub_pck->fix_head.ctrl_byte = (ctrl_byte_t *) frame;
+	pos++;
+	rem_length_t rem_length = decode_pck_len(&frame[pos]);
+	unsub_pck->fix_head.rem_len = rem_length.value;
+	pos += rem_length.bytes_nb;
+
+	unsub_pck->var_head.packet_id  = (uint16_t*) &frame[pos];
+	*unsub_pck->var_head.packet_id = X_HTONS(*unsub_pck->var_head.packet_id);
+	pos += 2;
+
+	const uint8_t fix_head_size = 2;
+	uint8_t topic_nb =0;
+	while (pos < (unsub_pck->fix_head.rem_len + fix_head_size)){
+		unsub_pck->pld_topics[topic_nb].len = (uint16_t *)  &frame[pos];
+		*unsub_pck->pld_topics[topic_nb].len  = X_HTONS(*unsub_pck->pld_topics[topic_nb].len );
+		pos += 2;
+		unsub_pck->pld_topics[topic_nb].name =  (char*)  &frame[pos];
+		pos += (*unsub_pck->pld_topics[topic_nb].len);
+		unsub_pck->pld_topics[topic_nb].qos = (uint8_t*) &frame[pos];
+		pos += 1;
+		topic_nb++;
+	}
+	return topic_nb;
+}
+
+
+static void delete_subscribed_topic(tb_client_t * client, unsub_topic_ptr_t * subs_topic){
+	for (uint8_t i =0; i < MAX_SUBS_TOPIC; i++){
+		if ((client->subs_topic[i].name[0])
+				&& (is_the_same_topic(client->subs_topic[i].name, subs_topic->name, *subs_topic->len))){
+			memset(&client->subs_topic[i], 0, sizeof(sub_topic_t));
+		}
+	}
+}
+
+
+bool delete_listed_subscriptions(tb_client_t * client, unsub_topic_ptr_t * unsub_topic_list, uint8_t topic_nb){
+	uint8_t i=0;
+	while (i < topic_nb){
+		delete_subscribed_topic(client, &unsub_topic_list[i] );
+		i++;
+	}
+	return true;
+}
+
+
+void  encode_unsubscribe_ack(unsub_ack_t * unsub_ack, uint16_t pckt_id){
+	unsub_ack->control_type = (PCKT_TYPE_SUBACK << 4);
+	unsub_ack->remainin_len = SUB_ACK_LEN;  //(?)
+	unsub_ack->packet_id = pckt_id;
+}
 
 
 

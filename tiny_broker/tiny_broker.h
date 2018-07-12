@@ -62,6 +62,7 @@
 #define CONTR_TYPE_CONNACK 			(2)
 #define PUB_ACK_LEN					(2)
 #define SUB_ACK_LEN					(3)
+#define UNSUB_ACK_LEN					(3)
 #define SUB_ACK_FAIL				(80)
 
 /*connection ack coded*/
@@ -89,6 +90,20 @@ typedef int (*broker_net_conn)(void *cntx, sockaddr_t * sockaddr);
 typedef int (*broker_net_send)(void *cntx, sockaddr_t * sockaddr, const uint8_t* buf, uint16_t buf_len);
 typedef int (*broker_net_rec)(void *cntx, sockaddr_t * sockaddr, uint8_t* buf, uint16_t buf_len);
 typedef int (*broker_net_discon)(void *context, sockaddr_t * sockaddr);
+
+
+
+/*---------general-------------------*/
+typedef struct{
+	uint8_t reserved :4;
+	uint8_t type :4;
+}ctrl_byte_t;
+
+
+typedef struct {
+	ctrl_byte_t * ctrl_byte;
+	uint32_t rem_len;
+}fix_head_t;
 
 
 
@@ -204,18 +219,6 @@ typedef struct{
 /*---------subscribe-------------------*/
 
 typedef struct{
-	uint8_t reserved :4;
-	uint8_t type :4;
-}subs_ctrl_byte_t;
-
-
-typedef struct {
-	subs_ctrl_byte_t * subs_ctrl_byte;
-	uint32_t rem_len;
-}sub_fix_head_t;
-
-
-typedef struct{
 	uint16_t  * packet_id;
 }sub_var_head_t;
 
@@ -228,7 +231,7 @@ typedef struct{
 
 
 typedef struct{
-	sub_fix_head_t fix_head;
+	fix_head_t fix_head;
 	sub_var_head_t var_head;
 	sub_topic_ptr_t pld_topics[MAX_SUBS_TOPIC];
 }sub_pck_t;
@@ -248,6 +251,35 @@ typedef struct{
 	uint16_t packet_id;
 	uint8_t payload[MAX_SUBS_TOPIC];
 }sub_ack_t;
+
+
+/*---------unsubscribe-------------------*/
+typedef struct{
+	uint16_t  * packet_id;
+}unsub_var_head_t;
+
+
+typedef struct{
+	uint16_t *len;
+	char *name;
+	uint8_t *qos;
+}unsub_topic_ptr_t;
+
+
+typedef struct{
+	fix_head_t fix_head;
+	unsub_var_head_t var_head;
+	unsub_topic_ptr_t pld_topics[MAX_SUBS_TOPIC];
+}unsub_pck_t;//maybe "typedef" for "subscribe_pck_t" will be enough?
+
+
+typedef struct{
+	uint8_t control_type;
+	uint8_t remainin_len;
+	uint16_t packet_id;
+	uint8_t payload[MAX_SUBS_TOPIC];
+}unsub_ack_t;
+
 
 
 /*---------ping-------------------*/
@@ -350,9 +382,12 @@ void publish_msg_to_subscribers(broker_t * broker, pub_pck_t * pub_pck);
 void encode_publish_ack(publish_ack_t * publish_ack, uint16_t pckt_id);
 
 uint8_t broker_decode_subscribe(uint8_t* frame, sub_pck_t * sub_pck);
-bool add_subscriptions_from_packet(tb_client_t * client, sub_pck_t * sub_pck, uint8_t topic_nb, uint8_t * result_list);
+bool add_subscriptions_from_list(tb_client_t * client, sub_topic_ptr_t *topic_list, uint8_t topic_nb, uint8_t * result_list);
 void encode_subscribe_ack(sub_ack_t * sub_ack, uint16_t pckt_id, uint8_t topic_nb, uint8_t * result_list);
 
+uint8_t  broker_decode_unsubscribe(uint8_t* frame, unsub_pck_t * unsub_pck);
+bool delete_listed_subscriptions(tb_client_t * client, unsub_topic_ptr_t * unsub_topic_list, uint8_t topic_nb);
+void  encode_unsubscribe_ack(unsub_ack_t * unsub_ack, uint16_t pckt_id);
 
 void broker_decode_ping_req(uint8_t* frame, ping_req_pck_t * ping_pck);
 void broker_encode_ping_rsp(ping_rsp_pck_t* ping_pck);

@@ -198,9 +198,15 @@ int main()
 	uint8_t topic_nb = broker_decode_subscribe(client.tx_buf, &sub_pck);
 	tb_client_t * subscribing_client = &broker.clients[0];
 	uint8_t result_list[MAX_SUBS_TOPIC];
-	add_subscriptions_from_packet(subscribing_client, &sub_pck, topic_nb, result_list);
+	add_subscriptions_from_list(subscribing_client, sub_pck.pld_topics, topic_nb, result_list);
 
+	MqttUnsubscribe unsubscribe;
+	memcpy(&unsubscribe, &subscribe, sizeof (MqttSubscribe));
+	MqttEncode_Unsubscribe(client.tx_buf, client.tx_buf_len, &subscribe);
 
+	unsub_pck_t unsub_pck;
+	 topic_nb =  broker_decode_unsubscribe(client.tx_buf, &unsub_pck);
+	delete_listed_subscriptions(subscribing_client,unsub_pck.pld_topics, topic_nb);
 
 	MqttEncode_Ping(client.tx_buf, client.tx_buf_len);
 	ping_req_pck_t ping_req;
